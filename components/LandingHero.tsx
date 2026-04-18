@@ -1,131 +1,271 @@
-"use client";
-
-import { motion, Variants } from "framer-motion";
-import {
-  ArrowRight,
-  Network,
-  ShieldCheck,
-  Sparkles,
-  Users,
-} from "lucide-react";
+import DongSonDrum, { DongSonHaloMemo } from "@/components/DongSonDrum";
+import { ArrowRight } from "lucide-react";
 import Link from "next/link";
-
-const fadeIn: Variants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] },
-  },
-};
-
-const staggerContainer: Variants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.15,
-      delayChildren: 0.1,
-    },
-  },
-};
 
 interface LandingHeroProps {
   siteName: string;
 }
 
+const CornerOrnament = ({ className }: { className?: string }) => (
+  <svg
+    viewBox="0 0 200 200"
+    fill="none"
+    stroke="#5e3a17"
+    strokeWidth={0.8}
+    className={className}
+    aria-hidden="true"
+  >
+    <g opacity={0.9}>
+      <path d="M10 10 L60 10 L60 14 L14 14 L14 60 L10 60 Z" fill="#5e3a17" />
+      <circle cx={80} cy={80} r={30} />
+      <circle cx={80} cy={80} r={22} />
+      <circle cx={80} cy={80} r={14} />
+      <path
+        d="M80 60 L82 78 L100 80 L82 82 L80 100 L78 82 L60 80 L78 78 Z"
+        fill="#5e3a17"
+        opacity={0.6}
+      />
+    </g>
+  </svg>
+);
+
+const cards = [
+  {
+    idx: "I / III",
+    title: "Quản lý thành viên",
+    desc: "Lưu giữ tên tuổi, hình ảnh, câu chuyện và dấu ấn riêng của từng thành viên — trọn vẹn một kiếp người trong từng trang phả.",
+    icon: (
+      <svg viewBox="0 0 56 56" fill="none" stroke="currentColor" strokeWidth={1.2}>
+        <circle cx={28} cy={20} r={7} />
+        <circle cx={14} cy={38} r={5} />
+        <circle cx={42} cy={38} r={5} />
+        <path d="M28 27 L28 36 M28 36 L14 43 M28 36 L42 43" />
+        <path d="M6 52 L50 52" strokeDasharray="2 2" />
+      </svg>
+    ),
+  },
+  {
+    idx: "II / III",
+    title: "Sơ đồ phả hệ",
+    desc: "Xem trực quan sơ đồ phả hệ, thế hệ và mối quan hệ gia đình với giao diện cây hiện đại, dễ thao tác.",
+    icon: (
+      <svg viewBox="0 0 56 56" fill="none" stroke="currentColor" strokeWidth={1.2}>
+        <circle cx={28} cy={28} r={24} />
+        <circle cx={28} cy={28} r={16} />
+        <circle cx={28} cy={28} r={8} />
+        <path
+          d="M28 12 L30 26 L44 28 L30 30 L28 44 L26 30 L12 28 L26 26 Z"
+          fill="currentColor"
+          opacity={0.4}
+        />
+      </svg>
+    ),
+  },
+  {
+    idx: "III / III",
+    title: "Bảo mật thông tin",
+    desc: "Dữ liệu dòng họ được niêm phong bằng mã hoá thế hệ mới, phân quyền theo vai vế — chỉ người trong tộc mới được mở từng lớp ký ức thiêng liêng.",
+    icon: (
+      <svg viewBox="0 0 56 56" fill="none" stroke="currentColor" strokeWidth={1.2}>
+        <path d="M28 6 L48 14 V28 C48 40 38 48 28 52 C18 48 8 40 8 28 V14 Z" />
+        <path d="M28 14 L42 20 V30 C42 38 36 43 28 46 C20 43 14 38 14 30 V20 Z" />
+        <path
+          d="M24 28 L27 32 L34 24"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    ),
+  },
+];
+
 export default function LandingHero({ siteName }: LandingHeroProps) {
   return (
-    <>
-      <motion.div
-        className="max-w-5xl text-center space-y-12 w-full relative z-10"
-        initial="hidden"
-        animate="visible"
-        variants={staggerContainer}
-      >
-        <motion.div
-          className="space-y-6 sm:space-y-8 flex flex-col items-center"
-          variants={fadeIn}
-        >
-          <motion.div
-            whileHover={{ scale: 1.05 }}
-            className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold text-amber-800 bg-white/60 rounded-full shadow-[0_2px_10px_-3px_rgba(0,0,0,0.1)] border border-amber-200/50 relative overflow-hidden group"
-          >
-            <Sparkles className="size-4 text-amber-500" />
-            Nền tảng gia phả hiện đại & bảo mật
-            <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/50 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out"></div>
-          </motion.div>
+    <div
+      className="relative min-h-screen w-full overflow-hidden"
+      style={{
+        background: "#efe6d2",
+        color: "#1c1410",
+        fontFamily: "var(--font-lora), var(--font-playfair), serif",
+      }}
+    >
+      {/* ===== Background layers ===== */}
+      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+        <div className="absolute inset-0 landing-paper" />
 
-          <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-[5rem] font-serif font-bold text-stone-900 tracking-tight leading-[1.1] max-w-4xl">
-            <span className="block">{siteName}</span>
+        {/* Halo drum */}
+        <div className="drum-halo w-[min(130vmin,1500px)] aspect-square opacity-[0.18]">
+          <DongSonHaloMemo />
+        </div>
+
+        {/* Main drum */}
+        <div
+          className="drum-center w-[min(95vmin,1100px)] aspect-square opacity-[0.42]"
+          style={{ filter: "drop-shadow(0 0 40px rgba(94,58,23,0.15))" }}
+        >
+          <DongSonDrum />
+        </div>
+
+        {/* Corner motifs */}
+        <CornerOrnament className="absolute -top-8 -left-8 size-[220px] opacity-[0.28]" />
+        <CornerOrnament className="absolute -top-8 -right-8 size-[220px] opacity-[0.28] scale-x-[-1]" />
+        <CornerOrnament className="absolute -bottom-8 -left-8 size-[220px] opacity-[0.28] scale-y-[-1]" />
+        <CornerOrnament className="absolute -bottom-8 -right-8 size-[220px] opacity-[0.28] scale-x-[-1] scale-y-[-1]" />
+
+        <div className="absolute inset-0 landing-grain" />
+      </div>
+
+      {/* ===== Page content ===== */}
+      <div className="relative z-10 flex flex-col min-h-screen px-5 sm:px-10 lg:px-12 pt-8 sm:pt-10 pb-10 sm:pb-16">
+        {/* Top brand */}
+        <div className="flex items-center justify-center mb-8 sm:mb-10">
+          <div className="flex items-center gap-3">
+            <div className="grid place-items-center size-9 text-[#5e3a17]">
+              <svg viewBox="-20 -20 40 40" fill="none" stroke="currentColor">
+                <circle r={18} strokeWidth={1} />
+                <circle r={14} strokeWidth={1} />
+                <circle r={9} strokeWidth={1} />
+                <path
+                  d="M0 -7 L2 -2 L7 0 L2 2 L0 7 L-2 2 L-7 0 L-2 -2 Z"
+                  fill="currentColor"
+                />
+              </svg>
+            </div>
+            <div className="text-center">
+              <div className="font-serif font-semibold text-[22px] text-[#1c1410] tracking-wide">
+                {siteName}
+              </div>
+              <div
+                className="font-mono text-[10px] tracking-[0.22em] uppercase text-[#6b5a46] mt-0.5"
+                style={{ fontFamily: "var(--font-jetbrains-mono), monospace" }}
+              >
+                Nguồn cội · Mạch chảy · Lưu truyền
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Hero */}
+        <section className="flex-1 flex flex-col items-center justify-center text-center py-6 sm:py-10">
+          <div
+            className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full border border-[rgba(94,58,23,0.25)] bg-[rgba(255,250,240,0.55)] backdrop-blur-sm mb-6 font-bold uppercase text-[10px] sm:text-[11px] tracking-[0.2em] text-[#5e3a17]"
+            style={{ fontFamily: "var(--font-jetbrains-mono), monospace" }}
+          >
+            <span
+              className="size-1.5 rounded-full bg-[#8a5a2b]"
+              style={{ boxShadow: "0 0 0 3px rgba(194,138,61,0.25)" }}
+            />
+            {siteName} · Nền tảng phả hệ số
+          </div>
+
+          {/* Ornament */}
+          <div className="relative w-[60px] sm:w-[120px] h-[2px] mb-5 bg-gradient-to-r from-transparent via-[#8a5a2b] to-transparent">
+            <span className="absolute left-2 top-1/2 -translate-y-1/2 size-2 border border-[#8a5a2b] rotate-45" />
+            <span className="absolute right-2 top-1/2 -translate-y-1/2 size-2 border border-[#8a5a2b] rotate-45" />
+          </div>
+
+          <h1
+            className="font-serif font-semibold text-[#1c1410] leading-[0.95] tracking-tight"
+            style={{
+              fontSize: "clamp(56px, 10vw, 128px)",
+              fontFamily: "var(--font-lora), var(--font-playfair), serif",
+            }}
+          >
+            Dòng Họ
           </h1>
 
-          <p className="text-lg sm:text-xl md:text-2xl text-stone-600 max-w-2xl mx-auto leading-relaxed font-light">
-            Gìn giữ và lưu truyền những giá trị, cội nguồn và truyền thống tốt
-            đẹp của dòng họ cho các thế hệ mai sau.
+          <p
+            className="text-[15px] sm:text-[18px] leading-relaxed text-[#3a2d20] max-w-xs sm:max-w-[640px] mt-5 mb-8 px-2"
+            style={{ fontFamily: "var(--font-lora), var(--font-playfair), serif" }}
+          >
+            Nơi{" "}
+            <em className="not-italic font-semibold text-[#5e3a17]">
+              dòng máu Lạc Hồng
+            </em>{" "}
+            chảy qua từng thế hệ, nơi mỗi cái tên là một nhịp trống đồng vọng
+            lại từ bốn nghìn năm. Gìn giữ, khắc ghi và truyền lại cội rễ cho
+            con cháu mai sau.
           </p>
-        </motion.div>
-
-        <motion.div
-          className="pt-6 flex flex-col sm:flex-row gap-4 justify-center items-center w-full px-4 sm:px-0 relative"
-          variants={fadeIn}
-        >
-          {/* Subtle glow behind the button */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-16 bg-amber-500/30 blur-2xl rounded-full z-0 hidden sm:block"></div>
 
           <Link
             href="/login"
-            className="group inline-flex items-center justify-center gap-2 px-8 py-4 sm:px-10 sm:py-5 text-base sm:text-lg font-bold text-white bg-stone-900 border border-stone-800 hover:bg-stone-800 hover:border-stone-700 rounded-2xl shadow-xl shadow-stone-900/10 hover:shadow-2xl hover:shadow-stone-900/20 transition-all duration-300 hover:-translate-y-1 active:translate-y-0 w-full sm:w-auto overflow-hidden relative"
+            className="group relative inline-flex items-center gap-3 px-6 sm:px-7 py-3.5 sm:py-4 bg-[#1c1410] text-[#f3e9d0] rounded-[2px] text-[13px] sm:text-[14px] font-bold uppercase tracking-[0.08em] overflow-hidden transition-all hover:-translate-y-px hover:bg-[#5e3a17]"
+            style={{ fontFamily: "var(--font-jetbrains-mono), monospace" }}
           >
-            <span className="relative z-10 flex items-center gap-3">
-              Đăng nhập để xem thông tin
-              <ArrowRight className="size-5 group-hover:translate-x-1.5 transition-transform" />
-            </span>
+            <span className="absolute inset-1 border border-[rgba(243,233,208,0.25)] pointer-events-none" />
+            <span className="relative">Đăng nhập để trải nghiệm</span>
+            <ArrowRight className="relative size-4 transition-transform group-hover:translate-x-1" />
           </Link>
-        </motion.div>
 
-        <motion.div
-          className="mt-24 grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 text-left  border-t border-stone-200/50 relative"
-          variants={staggerContainer}
-        >
-          {[
-            {
-              icon: <Users className="size-6 text-amber-700" />,
-              title: "Quản lý Thành viên",
-              desc: "Cập nhật thông tin chi tiết, tiểu sử và hình ảnh của từng thành viên trong dòng họ một cách nhanh chóng và bảo mật.",
-            },
-            {
-              icon: <Network className="size-6 text-amber-700" />,
-              title: "Sơ đồ Sáng tạo",
-              desc: "Xem trực quan sơ đồ phả hệ, thế hệ và mối quan hệ gia đình với giao diện cây hiện đại, dễ thao tác.",
-            },
-            {
-              icon: <ShieldCheck className="size-6 text-amber-700" />,
-              title: "Bảo mật Tối đa",
-              desc: "Dữ liệu riêng tư như số điện thoại, quê quán được phân quyền chặt chẽ, bảo vệ an toàn trên hệ thống đám mây.",
-            },
-          ].map((feature, idx) => (
-            <motion.div
-              key={idx}
-              variants={fadeIn}
-              whileHover={{ y: -5 }}
-              className="bg-white/70 backdrop-blur-xl p-8 rounded-3xl border border-white/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)] hover:bg-white transition-all duration-500 flex flex-col items-start group relative overflow-hidden"
-            >
-              <div className="absolute top-0 right-0 w-32 h-32 bg-linear-to-br from-amber-100/50 to-transparent rounded-bl-[100px] opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-
-              <div className="p-3.5 bg-white rounded-2xl mb-6 shadow-sm ring-1 ring-stone-100 group-hover:scale-110 group-hover:shadow-md transition-all duration-300 relative z-10">
-                {feature.icon}
+          {/* Meta row */}
+          <div
+            className="mt-8 sm:mt-10 flex flex-wrap gap-6 sm:gap-12 justify-center items-center text-[#5e3a17] text-[11px] tracking-[0.18em] uppercase"
+            style={{ fontFamily: "var(--font-jetbrains-mono), monospace" }}
+          >
+            {[
+              { num: "18", label: "Đời Hùng Vương" },
+              { num: "4.000+", label: "Năm văn hiến" },
+              { num: "∞", label: "Thế hệ mai sau" },
+            ].map((m) => (
+              <div key={m.label} className="flex items-center gap-2.5 font-bold">
+                <span
+                  className="text-[22px] text-[#5e3a17] font-medium tracking-normal"
+                  style={{ fontFamily: "var(--font-lora), var(--font-playfair), serif" }}
+                >
+                  {m.num}
+                </span>
+                <span className="text-[#3a2d20]">{m.label}</span>
               </div>
-              <h3 className="text-xl sm:text-2xl font-bold text-stone-800 mb-3 font-serif relative z-10 group-hover:text-amber-900 transition-colors">
-                {feature.title}
+            ))}
+          </div>
+        </section>
+
+        {/* Feature cards */}
+        <section className="max-w-[1200px] mx-auto w-full grid grid-cols-1 md:grid-cols-3 gap-0 mt-6 sm:mt-10 relative">
+          <span className="hidden md:block absolute left-1/2 -top-6 w-px h-[18px] bg-[#8a5a2b] opacity-40" />
+          {cards.map((c, i) => (
+            <article
+              key={c.title}
+              className={`relative p-8 sm:p-10 bg-[rgba(255,250,240,0.72)] backdrop-blur-md border border-[rgba(94,58,23,0.18)] transition-all hover:bg-[rgba(255,250,240,0.92)] hover:-translate-y-0.5 group
+              ${i < cards.length - 1 ? "md:border-r-0" : ""}`}
+            >
+              <span
+                className="absolute top-4 right-4 text-[10px] tracking-[0.15em] text-[#6b5a46]"
+                style={{ fontFamily: "var(--font-jetbrains-mono), monospace" }}
+              >
+                {c.idx}
+              </span>
+              <div className="size-14 mb-5 text-[#8a5a2b] transition-transform group-hover:rotate-[15deg] group-hover:text-[#5e3a17]">
+                {c.icon}
+              </div>
+              <h3
+                className="text-2xl font-semibold text-[#1c1410] mb-1.5"
+                style={{ fontFamily: "var(--font-lora), var(--font-playfair), serif" }}
+              >
+                {c.title}
               </h3>
-              <p className="text-stone-600 text-base leading-relaxed relative z-10">
-                {feature.desc}
+              <p
+                className="text-[14px] sm:text-[14.5px] leading-relaxed text-[#3a2d20]"
+                style={{ fontFamily: "var(--font-lora), var(--font-playfair), serif" }}
+              >
+                {c.desc}
               </p>
-            </motion.div>
+            </article>
           ))}
-        </motion.div>
-      </motion.div>
-    </>
+        </section>
+
+        {/* Footer line */}
+        <div
+          className="mt-12 sm:mt-16 pt-4 border-t border-[rgba(94,58,23,0.25)] flex flex-wrap gap-3 justify-between text-[10px] uppercase tracking-[0.2em] text-[#6b5a46]"
+          style={{ fontFamily: "var(--font-jetbrains-mono), monospace" }}
+        >
+          <span>© {siteName} · MMXXVI</span>
+          <span className="hidden sm:inline">
+            Họa tiết lấy cảm hứng từ trống đồng Đông Sơn
+          </span>
+          <span>Bản khắc số · v1.0</span>
+        </div>
+      </div>
+    </div>
   );
 }
