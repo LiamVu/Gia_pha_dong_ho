@@ -14,21 +14,6 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
-const dayNames = [
-  "Chủ Nhật",
-  "Thứ Hai",
-  "Thứ Ba",
-  "Thứ Tư",
-  "Thứ Năm",
-  "Thứ Sáu",
-  "Thứ Bảy",
-];
-
-function formatSolarDate(iso: string): string {
-  const d = new Date(iso);
-  return `${dayNames[d.getDay()]}, ${d.getDate()} tháng ${d.getMonth() + 1}, ${d.getFullYear()}`;
-}
-
 type FeatIconColor = "bronze" | "rose" | "indigo" | "violet" | "patina";
 
 const iconColors: Record<
@@ -180,7 +165,7 @@ export default async function DashboardLaunchpad() {
                 color: "var(--l-ink)",
               }}
             >
-              {formatSolarDate(lunar.solarStr)}
+              {lunar.solarStr}
             </h2>
             <div
               className="flex items-center gap-2 text-[10px] tracking-[0.18em] uppercase"

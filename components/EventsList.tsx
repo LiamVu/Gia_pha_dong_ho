@@ -6,17 +6,7 @@ import {
   CustomEventRecord,
   FamilyEvent,
 } from "@/utils/eventHelpers";
-import { motion } from "framer-motion";
-import {
-  AlignLeft,
-  Cake,
-  CalendarDays,
-  Clock,
-  Flower,
-  MapPin,
-  Plus,
-  Star,
-} from "lucide-react";
+import { CalendarDays, Cake, Check, Clock, Flower, Plus, Star } from "lucide-react";
 import { Solar } from "lunar-javascript";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
@@ -41,6 +31,16 @@ interface EventsListProps {
   customEvents?: CustomEventRecord[];
 }
 
+const WEEKDAYS = [
+  "Chủ nhật",
+  "Thứ hai",
+  "Thứ ba",
+  "Thứ tư",
+  "Thứ năm",
+  "Thứ sáu",
+  "Thứ bảy",
+];
+
 const DAY_LABELS: Record<string, string> = {
   "-1": "Hôm qua",
   "0": "Hôm nay",
@@ -60,176 +60,227 @@ function daysUntilLabel(days: number): string {
   return `${Math.ceil(days / 30)} tháng nữa`;
 }
 
-function EventCard({
+type EventIconKind = "birth" | "death" | "custom";
+const iconStyles: Record<
+  EventIconKind,
+  { bg: string; border: string; color: string }
+> = {
+  birth: {
+    bg: "rgba(88,90,150,0.12)",
+    border: "rgba(88,90,150,0.32)",
+    color: "#3f4276",
+  },
+  death: {
+    bg: "rgba(194,138,61,0.14)",
+    border: "rgba(194,138,61,0.35)",
+    color: "var(--l-bronze-deep)",
+  },
+  custom: {
+    bg: "rgba(120,88,150,0.12)",
+    border: "rgba(120,88,150,0.3)",
+    color: "#5e3a76",
+  },
+};
+
+const zodiacHues: { bg: string; border: string; color: string }[] = [
+  {
+    bg: "rgba(88,90,150,0.10)",
+    border: "rgba(88,90,150,0.35)",
+    color: "#3f4276",
+  },
+  {
+    bg: "rgba(77,107,90,0.12)",
+    border: "rgba(77,107,90,0.35)",
+    color: "#2d4a3a",
+  },
+  {
+    bg: "rgba(194,138,61,0.14)",
+    border: "rgba(194,138,61,0.4)",
+    color: "var(--l-bronze-deep)",
+  },
+  {
+    bg: "rgba(120,88,150,0.12)",
+    border: "rgba(120,88,150,0.35)",
+    color: "#5e3a76",
+  },
+  {
+    bg: "rgba(184,95,95,0.12)",
+    border: "rgba(184,95,95,0.35)",
+    color: "#8a3a3a",
+  },
+];
+
+function zodiacStyle(sign: string) {
+  let hash = 0;
+  for (let i = 0; i < sign.length; i++)
+    hash = (hash * 31 + sign.charCodeAt(i)) | 0;
+  return zodiacHues[Math.abs(hash) % zodiacHues.length];
+}
+
+function CardCorners() {
+  return (
+    <>
+      <span
+        className="absolute -top-px -left-px size-[14px] border pointer-events-none"
+        style={{
+          borderColor: "var(--l-bronze)",
+          borderRight: "none",
+          borderBottom: "none",
+        }}
+      />
+      <span
+        className="absolute -bottom-px -right-px size-[14px] border pointer-events-none"
+        style={{
+          borderColor: "var(--l-bronze)",
+          borderLeft: "none",
+          borderTop: "none",
+        }}
+      />
+    </>
+  );
+}
+
+function EventRow({
   event,
-  index,
   onEditCustomEvent,
 }: {
   event: FamilyEvent;
-  index: number;
   onEditCustomEvent: (e: FamilyEvent) => void;
 }) {
   const isBirthday = event.type === "birthday";
   const isCustom = event.type === "custom_event";
-  const isToday = event.daysUntil === 0;
-  const isPast = event.daysUntil < 0;
-  const isSoon = event.daysUntil > 0 && event.daysUntil <= 7;
+  const isDeath = event.type === "death_anniversary";
+  const kind: EventIconKind = isBirthday ? "birth" : isDeath ? "death" : "custom";
+  const style = iconStyles[kind];
 
   const { setMemberModalId } = useDashboard();
 
   const handleClick = () => {
-    if (isCustom) {
-      onEditCustomEvent(event);
-    } else if (event.personId) {
-      setMemberModalId(event.personId);
-    }
+    if (isCustom) onEditCustomEvent(event);
+    else if (event.personId) setMemberModalId(event.personId);
   };
 
-  // Compute age or years since for display
   const yearsInfo = (() => {
     if (!event.originYear) return null;
     const now = new Date().getFullYear();
     const diff = now - event.originYear;
     if (diff <= 0) return null;
     if (isBirthday) return `${diff} tuổi`;
-    if (event.type === "death_anniversary") return `${diff} năm`;
+    if (isDeath) return `${diff} năm`;
     return null;
   })();
 
   const dateLabel = (() => {
-    const weekdays = [
-      "Chủ nhật",
-      "Thứ hai",
-      "Thứ ba",
-      "Thứ tư",
-      "Thứ năm",
-      "Thứ sáu",
-      "Thứ bảy",
-    ];
     const d = event.nextOccurrence;
-    const dayOfWeek = weekdays[d.getDay()];
+    const dayOfWeek = WEEKDAYS[d.getDay()];
     const day = d.getDate().toString().padStart(2, "0");
     const month = (d.getMonth() + 1).toString().padStart(2, "0");
     const year = d.getFullYear();
-
     let label = `${dayOfWeek}, ngày ${day}/${month}`;
-    if (event.type === "custom_event") {
-      label += `/${year}`;
-    }
-    if (event.type === "death_anniversary") {
+    if (isCustom) label += `/${year}`;
+    if (isDeath)
       label += ` (Âm lịch: ${event.eventDateLabel.replace(" ÂL", "")})`;
-    }
     return label;
   })();
 
+  const zodiac =
+    isBirthday && event.originDay && event.originMonth
+      ? getZodiacSign(event.originDay, event.originMonth)
+      : null;
+  const zStyle = zodiac ? zodiacStyle(zodiac) : null;
+
+  const Icon = isBirthday ? Cake : isDeath ? Flower : Star;
+
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35, delay: index * 0.04 }}
+    <div
       onClick={handleClick}
-      className={`w-full text-left flex items-start gap-3 sm:gap-4 p-3.5 sm:p-4 rounded-2xl border transition-all cursor-pointer active:scale-[0.98] hover:shadow-md group ${
-        isToday
-          ? "bg-amber-50 border-amber-300 shadow-sm"
-          : isPast
-            ? "bg-stone-50/60 border-stone-200/50"
-            : isBirthday
-              ? "bg-white/80 border-stone-200/60 hover:border-blue-200"
-              : isCustom
-                ? "bg-white/80 border-stone-200/60 hover:border-purple-200"
-                : "bg-white/80 border-stone-200/60 hover:border-rose-200"
-      }`}
+      className="relative grid grid-cols-[auto_1fr] md:grid-cols-[auto_1fr_auto] items-center gap-4 md:gap-5 backdrop-blur-md border px-4 sm:px-6 py-4 sm:py-[18px] transition-all cursor-pointer hover:translate-x-0.5"
+      style={{
+        background: "var(--l-card)",
+        borderColor: "var(--l-card-border)",
+      }}
     >
+      <CardCorners />
+
       {/* Icon */}
       <div
-        className={`shrink-0 size-10 sm:size-11 flex items-center justify-center rounded-xl ${
-          isToday
-            ? "bg-amber-100 text-amber-600"
-            : isPast
-              ? "bg-stone-100 text-stone-400"
-              : isBirthday
-                ? "bg-blue-50 text-blue-500"
-                : isCustom
-                  ? "bg-purple-50 text-purple-500"
-                  : "bg-rose-50 text-rose-500"
-        }`}
+        className="size-11 shrink-0 grid place-items-center border"
+        style={{
+          background: style.bg,
+          borderColor: style.border,
+          color: style.color,
+        }}
       >
-        {isBirthday ? (
-          <Cake className="size-[18px] sm:size-5" />
-        ) : isCustom ? (
-          <Star className="size-[18px] sm:size-5" />
-        ) : (
-          <Flower className="size-[18px] sm:size-5" />
-        )}
+        <Icon className="size-5" fill={isCustom ? "currentColor" : "none"} />
       </div>
 
-      {/* Info */}
-      <div className="flex-1 min-w-0">
-        {/* Top row: name + badge */}
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-          <p
-            className={`font-semibold text-[15px] sm:text-base truncate transition-colors ${
-              isPast
-                ? "text-stone-500"
-                : "text-stone-800 group-hover:text-amber-700"
-            }`}
-          >
-            {event.personName}
-          </p>
-          {isBirthday &&
-            event.originDay &&
-            event.originMonth &&
-            getZodiacSign(event.originDay, event.originMonth) && (
-              <span className="shrink-0 text-[10px] font-sans font-bold text-indigo-700 bg-indigo-50 border border-indigo-200/60 rounded-md px-1.5 py-0.5 whitespace-nowrap shadow-xs tracking-wider">
-                {getZodiacSign(event.originDay, event.originMonth)}
-              </span>
-            )}
-          {/* Days badge — inline with name */}
-          <span
-            className={`shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[11px] font-bold leading-tight whitespace-nowrap ${
-              isToday
-                ? "bg-amber-400 text-white"
-                : isPast
-                  ? "bg-stone-200/80 text-stone-500"
-                  : isSoon
-                    ? "bg-red-100 text-red-600"
-                    : "bg-stone-100 text-stone-500"
-            }`}
-          >
-            {isToday && (
-              <span className="relative flex size-1.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-200 opacity-75" />
-                <span className="relative inline-flex rounded-full size-1.5 bg-white" />
-              </span>
-            )}
-            {!isToday && <Clock className="size-2.5" />}
-            {daysUntilLabel(event.daysUntil)}
+      {/* Main info */}
+      <div className="min-w-0">
+        <h3
+          className="font-semibold text-[15px] sm:text-[17px] m-0 mb-1 inline-flex items-center gap-2.5 flex-wrap"
+          style={{
+            fontFamily: "var(--font-lora), var(--font-playfair), serif",
+            color: "var(--l-ink)",
+          }}
+        >
+          <span className="truncate">{event.personName}</span>
+          {zodiac && zStyle && (
+            <span
+              className="inline-flex items-center px-2 py-0.5 text-[9.5px] tracking-[0.18em] uppercase font-medium border"
+              style={{
+                fontFamily: "var(--font-jetbrains-mono), monospace",
+                background: zStyle.bg,
+                borderColor: zStyle.border,
+                color: zStyle.color,
+              }}
+            >
+              {zodiac}
+            </span>
+          )}
+        </h3>
+        <div
+          className="flex items-center gap-4 text-[10px] sm:text-[10.5px] tracking-[0.14em] uppercase flex-wrap"
+          style={{
+            fontFamily: "var(--font-jetbrains-mono), monospace",
+            color: "var(--l-muted)",
+          }}
+        >
+          <span className="inline-flex items-center gap-1.5">
+            <CalendarDays className="size-3" />
+            <b
+              className="font-medium"
+              style={{ color: "var(--l-ink-soft)" }}
+            >
+              {dateLabel}
+            </b>
           </span>
-        </div>
-
-        {/* Details */}
-        <div className="flex flex-col gap-0.5 mt-1">
-          <p className="text-[13px] sm:text-sm text-stone-500 flex items-center gap-1.5 leading-snug">
-            <CalendarDays className="size-3.5 shrink-0" />
-            <span className="font-medium text-stone-600">{dateLabel}</span>
-            {yearsInfo && <span className="text-stone-400">· {yearsInfo}</span>}
-          </p>
-
-          {event.location && (
-            <p className="text-[13px] sm:text-sm text-stone-500 flex items-center gap-1.5 leading-snug">
-              <MapPin className="size-3.5 shrink-0" />
-              <span className="truncate">{event.location}</span>
-            </p>
-          )}
-          {event.content && (
-            <p className="text-[13px] sm:text-sm text-stone-400 flex items-start gap-1.5 leading-snug mt-0.5">
-              <AlignLeft className="size-3.5 shrink-0 mt-0.5" />
-              <span className="line-clamp-2">{event.content}</span>
-            </p>
-          )}
+          {yearsInfo && <span>{yearsInfo}</span>}
         </div>
       </div>
-    </motion.div>
+
+      {/* Right badge */}
+      <div
+        className="col-span-2 md:col-span-1 md:col-start-3 md:text-right flex items-center gap-2 text-[10px] sm:text-[10.5px] tracking-[0.2em] uppercase md:justify-end"
+        style={{
+          fontFamily: "var(--font-jetbrains-mono), monospace",
+          color: "var(--l-muted)",
+        }}
+      >
+        <span
+          className="size-1.5 rounded-full shrink-0"
+          style={{
+            background: "var(--l-bronze-glow)",
+            boxShadow: "0 0 0 3px rgba(194,138,61,0.25)",
+          }}
+        />
+        <b
+          className="font-semibold"
+          style={{ color: "var(--l-bronze-deep)" }}
+        >
+          {daysUntilLabel(event.daysUntil)}
+        </b>
+      </div>
+    </div>
   );
 }
 
@@ -244,7 +295,6 @@ export default function EventsList({
   const [showCount, setShowCount] = useState(20);
   const [showDeceasedBirthdays, setShowDeceasedBirthdays] = useState(false);
 
-  // Custom Event Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCustomEvent, setEditingCustomEvent] =
     useState<CustomEventRecord | null>(null);
@@ -266,20 +316,12 @@ export default function EventsList({
     router.refresh();
   };
 
-  const [todayDate] = useState(() => {
+  const todayDate = useMemo(() => {
     const today = new Date();
-    const weekdays = [
-      "Chủ nhật",
-      "Thứ hai",
-      "Thứ ba",
-      "Thứ tư",
-      "Thứ năm",
-      "Thứ sáu",
-      "Thứ bảy",
-    ];
-    const dayOfWeek = weekdays[today.getDay()];
+    const dayOfWeek = WEEKDAYS[today.getDay()];
     const solarStr = `${dayOfWeek}, ngày ${today.getDate()} tháng ${today.getMonth() + 1} năm ${today.getFullYear()}`;
-    let lunarStr = "";
+    let lunarShort = "";
+    let lunarYear = "";
     try {
       const solar = Solar.fromYmd(
         today.getFullYear(),
@@ -291,183 +333,240 @@ export default function EventsList({
       const isLeap = lMonthRaw < 0;
       const lMonth = Math.abs(lMonthRaw).toString().padStart(2, "0");
       const lDay = lunar.getDay().toString().padStart(2, "0");
-      lunarStr = `${lDay}/${lMonth}${isLeap ? " nhuận" : ""} ÂL`;
+      lunarShort = `${lDay}/${lMonth}${isLeap ? " nhuận" : ""}`;
+      lunarYear = lunar.getYearInGanZhi?.() ?? "";
     } catch (e) {
       console.error(e);
     }
-    return { solar: solarStr, lunar: lunarStr };
-  });
+    return { solar: solarStr, lunar: lunarShort, lunarYear };
+  }, []);
 
   const allEvents = useMemo(
     () => computeEvents(persons, customEvents),
     [persons, customEvents],
   );
 
+  const counts = useMemo(() => {
+    const base = showDeceasedBirthdays
+      ? allEvents
+      : allEvents.filter((e) => !(e.type === "birthday" && e.isDeceased));
+    const upcoming = base.filter((e) => e.daysUntil >= 0 && e.daysUntil <= 365);
+    return {
+      all: upcoming.length,
+      birthday: upcoming.filter((e) => e.type === "birthday").length,
+      death: upcoming.filter((e) => e.type === "death_anniversary").length,
+      custom: upcoming.filter((e) => e.type === "custom_event").length,
+      past: allEvents.filter((e) => e.daysUntil < 0 && e.daysUntil >= -365)
+        .length,
+    };
+  }, [allEvents, showDeceasedBirthdays]);
+
   const filtered = useMemo(() => {
     let result = allEvents;
     if (filter === "past") {
-      // Past tab: all event types from the past year
       return result
         .filter((e) => e.daysUntil < 0 && e.daysUntil >= -365)
-        .sort((a, b) => b.daysUntil - a.daysUntil); // most recent first
+        .sort((a, b) => b.daysUntil - a.daysUntil);
     }
-    if (filter !== "all") {
-      result = result.filter((e) => e.type === filter);
-    }
-    if (!showDeceasedBirthdays) {
+    if (filter !== "all") result = result.filter((e) => e.type === filter);
+    if (!showDeceasedBirthdays)
       result = result.filter((e) => !(e.type === "birthday" && e.isDeceased));
-    }
-    // Only show upcoming events (daysUntil >= 0) for non-past tabs
     return result.filter((e) => e.daysUntil >= 0 && e.daysUntil <= 365);
   }, [allEvents, filter, showDeceasedBirthdays]);
 
   const visible = filtered.slice(0, showCount);
 
-  const todayCount = allEvents.filter((e) => e.daysUntil === 0).length;
-  const soonCount = allEvents.filter(
-    (e) => e.daysUntil > 0 && e.daysUntil <= 7,
-  ).length;
+  const chips: {
+    key: typeof filter;
+    label: string;
+    count: number;
+  }[] = [
+    { key: "all", label: "Tất cả", count: counts.all },
+    { key: "birthday", label: "Sinh nhật", count: counts.birthday },
+    { key: "death_anniversary", label: "Ngày giỗ", count: counts.death },
+    { key: "custom_event", label: "Tuỳ chỉnh", count: counts.custom },
+    { key: "past", label: "Đã qua", count: counts.past },
+  ];
 
   return (
-    <div className="space-y-5">
-      {/* Summary banner */}
-      <motion.div
-        initial={{ opacity: 0, y: -8 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="relative overflow-hidden rounded-3xl bg-white border border-stone-200/60 shadow-sm hover:shadow-stone-100 hover:border-stone-400 transition-all duration-300 mb-8 p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center justify-between gap-6"
+    <div>
+      {/* ===== Date + Add CTA ===== */}
+      <div
+        className="relative backdrop-blur-md border p-5 sm:p-6 mb-6 grid gap-4 sm:gap-5 items-center sm:grid-cols-[auto_1fr_auto]"
+        style={{
+          background: "var(--l-card)",
+          borderColor: "var(--l-card-border)",
+        }}
       >
-        {/* Subtle background flair */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-amber-50/50 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none opacity-50"></div>
-
-        <div className="relative flex items-center gap-4 sm:gap-6">
-          <div className="size-16 rounded-2xl bg-stone-50 flex items-center justify-center shrink-0 border border-stone-100 shadow-sm text-stone-600">
-            <CalendarDays className="size-8" />
-          </div>
-          <div>
-            <p className="text-xl sm:text-2xl font-bold text-stone-800 tracking-tight">
-              {todayDate.solar}
-            </p>
-            {todayDate.lunar && (
-              <div className="mt-2.5 inline-flex flex-wrap items-center gap-2 px-3.5 py-1 rounded-full bg-stone-50 border border-stone-100">
-                <span className="text-xs font-medium text-stone-500 uppercase tracking-wider">
-                  Âm lịch:
-                </span>
-                <span className="text-sm font-semibold text-stone-700">
-                  {todayDate.lunar}
-                </span>
-              </div>
-            )}
-            {(todayCount > 0 || soonCount > 0) && (
-              <p className="text-sm text-stone-500 mt-3 flex items-start sm:items-center gap-2.5 font-medium">
-                <span className="relative flex size-2.5 shrink-0 mt-1 sm:mt-0">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full size-2.5 bg-amber-500"></span>
-                </span>
-                <span className="flex flex-wrap items-center gap-1.5">
-                  {todayCount > 0 && (
-                    <span className="font-semibold text-stone-700">
-                      {todayCount} sự kiện hôm nay
-                    </span>
-                  )}
-                  {todayCount > 0 && soonCount > 0 && (
-                    <span className="hidden sm:inline">·</span>
-                  )}
-                  {soonCount > 0 && (
-                    <span>{soonCount} sự kiện trong 7 ngày tới</span>
-                  )}
-                </span>
-              </p>
-            )}
-          </div>
+        <CardCorners />
+        <div
+          className="size-[54px] shrink-0 grid place-items-center border"
+          style={{
+            borderColor: "var(--l-line)",
+            background: "rgba(255,250,240,0.95)",
+            color: "var(--l-bronze-deep)",
+          }}
+        >
+          <CalendarDays className="size-6" />
         </div>
-
+        <div className="min-w-0">
+          <h2
+            className="font-semibold text-[18px] sm:text-[24px] leading-tight m-0 mb-1.5 tracking-tight"
+            style={{
+              fontFamily: "var(--font-lora), var(--font-playfair), serif",
+              color: "var(--l-ink)",
+            }}
+          >
+            {todayDate.solar}
+          </h2>
+          {todayDate.lunar && (
+            <div
+              className="flex items-center gap-2 text-[10px] tracking-[0.22em] uppercase flex-wrap"
+              style={{
+                fontFamily: "var(--font-jetbrains-mono), monospace",
+                color: "var(--l-muted)",
+              }}
+            >
+              Âm lịch ·{" "}
+              <b
+                className="font-semibold"
+                style={{ color: "var(--l-bronze-deep)" }}
+              >
+                {todayDate.lunar}
+              </b>
+              {todayDate.lunarYear && (
+                <>
+                  <span>·</span>
+                  <span>{todayDate.lunarYear}</span>
+                </>
+              )}
+            </div>
+          )}
+        </div>
         <button
           onClick={handleOpenCreateModal}
-          className="relative z-10 w-full sm:w-auto px-5 py-3 rounded-xl bg-stone-800 text-white font-semibold hover:bg-stone-900 active:scale-95 transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+          className="group relative inline-flex items-center gap-2 px-4 py-2.5 uppercase tracking-[0.2em] text-[10.5px] font-medium transition-all hover:-translate-y-px whitespace-nowrap"
+          style={{
+            fontFamily: "var(--font-jetbrains-mono), monospace",
+            background: "var(--l-btn-bg)",
+            color: "var(--l-btn-fg)",
+          }}
+          onMouseEnter={(e) =>
+            (e.currentTarget.style.background = "var(--l-btn-bg-hover)")
+          }
+          onMouseLeave={(e) =>
+            (e.currentTarget.style.background = "var(--l-btn-bg)")
+          }
         >
-          <Plus className="size-5 text-stone-300" />
-          <span>Thêm sự kiện</span>
+          <span
+            className="absolute inset-[3px] border pointer-events-none"
+            style={{ borderColor: "var(--l-btn-border)" }}
+          />
+          <Plus className="relative size-3.5" />
+          <span className="relative">Thêm sự kiện</span>
         </button>
-      </motion.div>
-
-      {/* Controls */}
-      <div className="flex flex-col gap-3">
-        {/* Filter tabs */}
-        <div className="flex flex-wrap items-center gap-2">
-          {(
-            [
-              { key: "all", label: "Tất cả" },
-              { key: "birthday", label: "Sinh nhật" },
-              { key: "death_anniversary", label: "Ngày giỗ" },
-              { key: "custom_event", label: "Tuỳ chỉnh" },
-              { key: "past", label: "Đã qua" },
-            ] as const
-          ).map((tab) => (
-            <button
-              key={tab.key}
-              onClick={() => {
-                setFilter(tab.key);
-                setShowCount(20);
-              }}
-              className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
-                filter === tab.key
-                  ? filter === "past"
-                    ? "bg-stone-600 text-white shadow-sm"
-                    : "bg-amber-500 text-white shadow-sm"
-                  : "bg-white/80 text-stone-600 border border-stone-200/60 hover:border-amber-200 hover:text-amber-700"
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-          <span className="ml-auto text-xs text-stone-400 self-center">
-            {filtered.length} sự kiện{filter === "past" ? " trong năm qua" : ""}
-          </span>
-        </div>
-
-        {/* Toggle options — hide when viewing past events */}
-        {filter !== "past" && (
-          <div className="flex px-1">
-            <label className="flex items-center gap-2.5 text-sm font-medium text-stone-600 cursor-pointer hover:text-stone-900 transition-colors select-none">
-              <input
-                type="checkbox"
-                checked={showDeceasedBirthdays}
-                onChange={(e) => setShowDeceasedBirthdays(e.target.checked)}
-                className="rounded-md border-stone-300 text-amber-500 focus:ring-amber-500 size-4 transition-all"
-              />
-              Hiển thị sinh nhật của người đã mất
-            </label>
-          </div>
-        )}
       </div>
 
-      {/* Event list */}
+      {/* ===== Filter chips ===== */}
+      <div className="flex flex-wrap items-center gap-2.5 mb-3.5">
+        {chips.map((chip) => {
+          const active = filter === chip.key;
+          return (
+            <button
+              key={chip.key}
+              onClick={() => {
+                setFilter(chip.key);
+                setShowCount(20);
+              }}
+              className="inline-flex items-center gap-2 px-4 py-2 border text-[13px] sm:text-[14px] transition-all hover:-translate-y-px"
+              style={{
+                fontFamily: "var(--font-lora), var(--font-playfair), serif",
+                borderColor: active ? "var(--l-bronze-deep)" : "var(--l-line)",
+                background: active
+                  ? "var(--l-bronze-glow)"
+                  : "rgba(255,250,240,0.7)",
+                color: active ? "#1c1410" : "var(--l-ink-soft)",
+                fontWeight: active ? 600 : 400,
+              }}
+            >
+              {chip.label}
+              <span
+                className="text-[10px] opacity-70 tracking-[0.1em]"
+                style={{ fontFamily: "var(--font-jetbrains-mono), monospace" }}
+              >
+                · {chip.count}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* ===== Toggle: show deceased birthdays ===== */}
+      {filter !== "past" && (
+        <button
+          type="button"
+          onClick={() => setShowDeceasedBirthdays((v) => !v)}
+          className="inline-flex items-center gap-2.5 mb-5 italic text-[13px] sm:text-[13.5px] cursor-pointer"
+          style={{
+            fontFamily: "var(--font-lora), var(--font-playfair), serif",
+            color: "var(--l-ink-soft)",
+          }}
+        >
+          <span
+            className="size-[18px] grid place-items-center border transition-all"
+            style={{
+              background: showDeceasedBirthdays
+                ? "var(--l-bronze-deep)"
+                : "rgba(255,250,240,0.6)",
+              borderColor: showDeceasedBirthdays
+                ? "var(--l-bronze-deep)"
+                : "var(--l-line)",
+              color: showDeceasedBirthdays ? "#f3e9d0" : "transparent",
+            }}
+          >
+            <Check className="size-2.5" strokeWidth={3} />
+          </span>
+          Hiển thị sinh nhật của người đã mất
+        </button>
+      )}
+
+      {/* ===== Event list ===== */}
       {visible.length === 0 ? (
-        <div className="text-center py-16 text-stone-400">
-          <CalendarDays className="size-10 mx-auto mb-3 opacity-40" />
-          <p className="font-medium">Không có sự kiện nào</p>
-          <p className="text-sm mt-1">
+        <div
+          className="text-center py-16 border"
+          style={{
+            borderColor: "var(--l-line)",
+            background: "rgba(255,250,240,0.5)",
+            color: "var(--l-muted)",
+            fontFamily: "var(--font-lora), var(--font-playfair), serif",
+          }}
+        >
+          <Clock className="size-10 mx-auto mb-3 opacity-60" />
+          <p className="font-medium m-0">Không có sự kiện nào</p>
+          <p className="text-[13px] mt-1 italic">
             Hãy bổ sung ngày sinh hoặc ngày mất cho thành viên
           </p>
         </div>
       ) : (
-        <div className="space-y-2.5">
-          {visible.map((event, i) => (
-            <EventCard
+        <div className="flex flex-col gap-3">
+          {visible.map((event) => (
+            <EventRow
               key={`${event.personId}-${event.type}-${event.eventDateLabel}`}
               event={event}
-              index={i}
               onEditCustomEvent={handleOpenEditModal}
             />
           ))}
         </div>
       )}
 
-      {/* Load more */}
       {filtered.length > showCount && (
         <button
           onClick={() => setShowCount((n) => n + 20)}
-          className="w-full py-3 text-sm font-semibold text-stone-500 hover:text-amber-600 transition-colors"
+          className="mt-4 w-full py-3 text-[13px] tracking-[0.18em] uppercase transition-colors"
+          style={{
+            fontFamily: "var(--font-jetbrains-mono), monospace",
+            color: "var(--l-muted)",
+          }}
         >
           Xem thêm {filtered.length - showCount} sự kiện…
         </button>

@@ -26,23 +26,44 @@ export default async function EventsPage() {
 
   return (
     <DashboardProvider>
-      <div className="flex-1 w-full relative flex flex-col pb-12">
-        <div className="w-full relative z-20 py-6 px-4 sm:px-6 lg:px-8 max-w-3xl mx-auto">
-          <h1 className="title">Sự kiện gia phả</h1>
-          <p className="text-stone-500 mt-1 text-sm">
-            Sinh nhật, ngày giỗ (âm lịch) và các sự kiện tuỳ chỉnh
+      <main className="relative max-w-[1060px] mx-auto w-full px-5 sm:px-7 pt-6 sm:pt-8 pb-14">
+        <header className="mb-6 sm:mb-7">
+          <div
+            className="inline-flex items-center gap-3 text-[10px] tracking-[0.28em] uppercase mb-2.5"
+            style={{
+              fontFamily: "var(--font-jetbrains-mono), monospace",
+              color: "var(--l-bronze-deep)",
+            }}
+          >
+            <span
+              className="inline-block w-[22px] h-px"
+              style={{ background: "var(--l-bronze)" }}
+            />
+            Sự kiện
+          </div>
+          <h1
+            className="font-semibold text-[32px] sm:text-[42px] leading-[1.1] tracking-tight m-0"
+            style={{
+              fontFamily: "var(--font-lora), var(--font-playfair), serif",
+              color: "var(--l-ink)",
+            }}
+          >
+            Sự kiện gia phả
+          </h1>
+          <p
+            className="italic text-[14px] sm:text-[15px] mt-2 m-0"
+            style={{
+              fontFamily: "var(--font-lora), var(--font-playfair), serif",
+              color: "var(--l-ink-soft)",
+            }}
+          >
+            Sinh nhật, ngày giỗ, âm lịch và các sự kiện tự chỉnh
           </p>
-        </div>
+        </header>
 
-        <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 w-full flex-1">
-          <EventsList
-            persons={persons ?? []}
-            customEvents={customEvents ?? []}
-          />
-        </main>
-      </div>
+        <EventsList persons={persons} customEvents={customEvents} />
+      </main>
 
-      {/* Modal for member details when clicking an event card */}
       <MemberDetailModal />
     </DashboardProvider>
   );
