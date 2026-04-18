@@ -1,27 +1,32 @@
 "use client";
 
 import config from "@/app/config";
-import Footer from "@/components/Footer";
+import DongSonDrum, { DongSonHaloMemo } from "@/components/DongSonDrum";
 import { createClient } from "@/utils/supabase/client";
-import { AnimatePresence, motion } from "framer-motion";
-import {
-  ArrowLeft,
-  Info,
-  KeyRound,
-  Mail,
-  Shield,
-  UserPlus,
-} from "lucide-react";
+import { ChevronLeft, KeyRound, Mail, Moon, Sun } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
+type Theme = "light" | "dark";
+const THEME_KEY = "giapha-landing-theme";
+
+function readSavedTheme(): Theme {
+  if (typeof window === "undefined") return "light";
+  const saved = window.localStorage.getItem(THEME_KEY);
+  return saved === "dark" || saved === "light" ? (saved as Theme) : "light";
+}
+
 export default function LoginPage() {
+  const [theme, setTheme] = useState<Theme>(readSavedTheme);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isDemo, setIsDemo] = useState(false);
+  const [isLogin, setIsLogin] = useState(true);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [confirmPassword, setConfirmPassword] = useState("");
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -34,12 +39,29 @@ export default function LoginPage() {
     }
   }, []);
 
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (
+        e.key === THEME_KEY &&
+        (e.newValue === "light" || e.newValue === "dark")
+      ) {
+        setTheme(e.newValue as Theme);
+      }
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
+
+  const toggleTheme = () => {
+    setTheme((prev) => {
+      const next = prev === "light" ? "dark" : "light";
+      localStorage.setItem(THEME_KEY, next);
+      return next;
+    });
+  };
+
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
-
-  const [isLogin, setIsLogin] = useState(true);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [confirmPassword, setConfirmPassword] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,14 +89,9 @@ export default function LoginPage() {
           return;
         }
 
-        // 1. Try to sign up
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password,
-        });
+        const { data, error } = await supabase.auth.signUp({ email, password });
 
         if (error) {
-          // Check if error is related to missing database schema/tables
           if (
             error.message.includes("relation") &&
             error.message.includes("does not exist")
@@ -82,35 +99,27 @@ export default function LoginPage() {
             router.push("/setup");
             return;
           }
-
           setError(error.message);
         } else if (data.user?.identities && data.user.identities.length === 0) {
           setError(
             "Email này đã được đăng ký. Vui lòng đăng nhập hoặc dùng email khác.",
           );
+        } else if (data.session) {
+          router.push("/dashboard");
+          router.refresh();
         } else {
-          if (data.session) {
+          const { data: signInData, error: signInError } =
+            await supabase.auth.signInWithPassword({ email, password });
+          if (!signInError && signInData.session) {
             router.push("/dashboard");
             router.refresh();
           } else {
-            // Attempt to sign in immediately (catches auto-confirmed first admin)
-            const { data: signInData, error: signInError } =
-              await supabase.auth.signInWithPassword({
-                email,
-                password,
-              });
-
-            if (!signInError && signInData.session) {
-              router.push("/dashboard");
-              router.refresh();
-            } else {
-              setSuccessMessage(
-                "Đăng ký thành công! Vui lòng chờ admin kích hoạt tài khoản để xem nội dung.",
-              );
-              setIsLogin(true); // Switch back to login view
-              setConfirmPassword(""); // clear confirm password
-              setPassword(""); // clear password
-            }
+            setSuccessMessage(
+              "Đăng ký thành công! Vui lòng chờ admin kích hoạt tài khoản để xem nội dung.",
+            );
+            setIsLogin(true);
+            setConfirmPassword("");
+            setPassword("");
           }
         }
       }
@@ -123,202 +132,273 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#fafaf9] select-none selection:bg-amber-200 selection:text-amber-900 relative overflow-hidden">
-      {/* Decorative background grid and blurs */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808008_1px,transparent_1px),linear-gradient(to_bottom,#80808008_1px,transparent_1px)] bg-size-[24px_24px] pointer-events-none"></div>
-      <div className="absolute inset-0 bg-[radial-gradient(circle_800px_at_50%_-30%,#fef3c7,transparent)] pointer-events-none"></div>
-
-      <div className="absolute top-0 inset-x-0 h-screen overflow-hidden pointer-events-none flex justify-center">
-        <div className="absolute top-[-10%] right-[-5%] w-[50vw] h-[50vw] max-w-[600px] max-h-[600px] bg-amber-300/20 rounded-full blur-[100px] mix-blend-multiply" />
-        <div className="absolute bottom-[0%] left-[-10%] w-[60vw] h-[60vw] max-w-[800px] max-h-[800px] bg-rose-200/20 rounded-full blur-[120px] mix-blend-multiply" />
+    <div
+      className="landing-root relative min-h-screen w-full overflow-hidden"
+      data-theme={theme}
+      style={{
+        background: "var(--l-bg)",
+        color: "var(--l-ink)",
+        fontFamily: "var(--font-lora), var(--font-playfair), serif",
+      }}
+    >
+      {/* ===== Background ===== */}
+      <div
+        className="fixed inset-0 z-0 pointer-events-none overflow-hidden"
+        style={{ color: "var(--l-stroke)" }}
+      >
+        <div className="absolute inset-0 landing-paper" />
+        <div className="drum-halo w-[min(130vmin,1500px)] aspect-square opacity-[0.18]">
+          <DongSonHaloMemo />
+        </div>
+        <div
+          className="drum-center w-[min(95vmin,1100px)] aspect-square"
+          style={{
+            opacity: "var(--l-drum-opacity)",
+            filter: "drop-shadow(0 0 40px rgba(94,58,23,0.15))",
+          }}
+        >
+          <DongSonDrum />
+        </div>
+        <div
+          className="absolute inset-0 landing-grain"
+          style={{ opacity: "var(--l-grain-opacity)" }}
+        />
       </div>
 
-      <div className="flex-1 flex items-center justify-center px-4 py-12 relative z-10 w-full">
-        <motion.div
-          className="max-w-md w-full bg-white/70 backdrop-blur-xl p-8 sm:p-10 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white/80 relative overflow-hidden"
-          initial={{ opacity: 0, scale: 0.95, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
-        >
-          <div className="absolute top-0 right-0 w-32 h-32 bg-linear-to-br from-amber-100/50 to-transparent rounded-bl-[100px] pointer-events-none"></div>
+      {/* ===== Page ===== */}
+      <div className="relative z-10 flex flex-col min-h-screen px-4 sm:px-10 pt-6 sm:pt-8 pb-8">
+        {/* Top bar */}
+        <div className="flex items-center justify-between gap-3">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-full border backdrop-blur-sm text-[10px] sm:text-[11px] tracking-[0.18em] uppercase transition-all hover:-translate-y-px"
+            style={{
+              fontFamily: "var(--font-jetbrains-mono), monospace",
+              borderColor: "var(--l-line)",
+              background:
+                theme === "light"
+                  ? "rgba(255,250,240,0.65)"
+                  : "rgba(60,44,30,0.55)",
+              color: "var(--l-bronze-deep)",
+            }}
+          >
+            <ChevronLeft className="size-3" />
+            Trang chủ
+          </Link>
 
-          <div className="text-center mb-8 relative z-10">
-            <Link
-              href="/"
-              className="inline-flex items-center justify-center p-3.5 bg-white rounded-2xl mb-5 shadow-sm ring-1 ring-stone-100 hover:scale-105 hover:shadow-md transition-all duration-300"
+          <button
+            onClick={toggleTheme}
+            aria-label={
+              theme === "light" ? "Chuyển sang tối" : "Chuyển sang sáng"
+            }
+            title={theme === "light" ? "Chuyển sang tối" : "Chuyển sang sáng"}
+            className="size-9 sm:size-10 grid place-items-center rounded-full border backdrop-blur-sm transition-all hover:-translate-y-px"
+            style={{
+              borderColor: "var(--l-line)",
+              background:
+                theme === "light"
+                  ? "rgba(255,250,240,0.6)"
+                  : "rgba(60,44,30,0.55)",
+              color: "var(--l-bronze-deep)",
+            }}
+          >
+            {theme === "light" ? (
+              <Moon className="size-4" />
+            ) : (
+              <Sun className="size-4" />
+            )}
+          </button>
+        </div>
+
+        {/* Card */}
+        <div className="flex-1 flex items-center justify-center py-8 sm:py-10">
+          <div
+            className="relative w-full max-w-[460px] backdrop-blur-[14px] border p-8 sm:p-12"
+            style={{
+              background: "var(--l-card)",
+              borderColor: "var(--l-card-border)",
+            }}
+          >
+            {/* Corner brackets */}
+            <span
+              className="absolute -top-px -left-px size-[18px] border"
+              style={{
+                borderColor: "var(--l-bronze)",
+                borderRight: "none",
+                borderBottom: "none",
+              }}
+            />
+            <span
+              className="absolute -bottom-px -right-px size-[18px] border"
+              style={{
+                borderColor: "var(--l-bronze)",
+                borderLeft: "none",
+                borderTop: "none",
+              }}
+            />
+
+            {/* Mark */}
+            <div
+              className="size-12 mx-auto mb-5 grid place-items-center"
+              style={{ color: "var(--l-bronze)" }}
             >
-              <Shield className="size-8 text-amber-600" />
-            </Link>
-            <h2 className="text-3xl sm:text-4xl font-serif font-bold text-stone-900 tracking-tight">
+              <svg
+                viewBox="0 0 40 40"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={1.6}
+              >
+                <circle cx={20} cy={20} r={16} />
+                <circle cx={20} cy={20} r={11} />
+                <path
+                  d="M20 10 L22 17 L29 18 L23 22 L26 30 L20 25 L14 30 L17 22 L11 18 L18 17 Z"
+                  fill="currentColor"
+                  stroke="none"
+                />
+              </svg>
+            </div>
+
+            <h1
+              className="text-center font-semibold text-[36px] sm:text-[44px] leading-none mb-2.5 tracking-tight"
+              style={{
+                fontFamily: "var(--font-lora), var(--font-playfair), serif",
+                color: "var(--l-ink)",
+              }}
+            >
               {isLogin ? "Đăng nhập" : "Đăng ký"}
-            </h2>
-            <p className="mt-3 text-sm text-stone-500 font-medium tracking-wide">
+            </h1>
+            <p
+              className="text-center italic text-[14px] sm:text-[15px] mb-8"
+              style={{ color: "var(--l-ink-soft)" }}
+            >
               {isLogin
                 ? "Đăng nhập để truy cập gia phả."
                 : "Tạo tài khoản thành viên mới."}
             </p>
+
             {isDemo && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mt-4 p-3 bg-amber-50 border border-amber-200/60 rounded-xl"
+              <div
+                className="mb-5 px-3 py-2.5 rounded border text-[12px] sm:text-[13px] text-center font-semibold"
+                style={{
+                  borderColor: "var(--l-line)",
+                  background: "rgba(194,138,61,0.12)",
+                  color: "var(--l-bronze-deep)",
+                }}
               >
-                <p className="text-[13px] font-semibold text-amber-800">
-                  Website Demo. Dữ liệu đều không có thật.
-                </p>
-              </motion.div>
+                Website Demo. Dữ liệu không có thật.
+              </div>
             )}
-          </div>
 
-          <form className="space-y-5 relative z-10" onSubmit={handleSubmit}>
-            <div className="space-y-4">
-              <div className="relative">
-                <label
-                  htmlFor="email-address"
-                  className="block text-[13px] font-semibold text-stone-600 mb-1.5 ml-1"
-                >
-                  Email
-                </label>
-                <div className="relative flex items-center group">
-                  <Mail className="absolute left-3.5 size-5 text-stone-400 group-focus-within:text-amber-500 transition-colors" />
-                  <input
-                    id="email-address"
-                    name="email"
-                    type="email"
-                    autoComplete="email"
-                    required
-                    className="bg-white/50 text-stone-900 placeholder-stone-400 block w-full rounded-xl border border-stone-200/80 shadow-[0_2px_10px_-3px_rgba(0,0,0,0.05)] focus:border-amber-400 focus:ring-amber-400 focus:bg-white pl-11 pr-4 py-3.5 transition-all duration-200 outline-none"
-                    placeholder="name@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                  />
-                </div>
-              </div>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <Field
+                label="Email"
+                id="email-address"
+                type="email"
+                autoComplete="email"
+                placeholder="name@example.com"
+                value={email}
+                onChange={setEmail}
+                icon={<Mail className="size-4" />}
+                theme={theme}
+              />
+              <Field
+                label="Mật khẩu"
+                id="password"
+                type="password"
+                autoComplete={isLogin ? "current-password" : "new-password"}
+                placeholder="Nhập mật khẩu"
+                value={password}
+                onChange={setPassword}
+                icon={<KeyRound className="size-4" />}
+                theme={theme}
+              />
+              {!isLogin && (
+                <Field
+                  label="Xác nhận mật khẩu"
+                  id="confirmPassword"
+                  type="password"
+                  autoComplete="new-password"
+                  placeholder="Nhập lại mật khẩu"
+                  value={confirmPassword}
+                  onChange={setConfirmPassword}
+                  icon={<KeyRound className="size-4" />}
+                  theme={theme}
+                />
+              )}
 
-              <div className="relative">
-                <label
-                  htmlFor="password"
-                  className="block text-[13px] font-semibold text-stone-600 mb-1.5 ml-1"
-                >
-                  Mật khẩu
-                </label>
-                <div className="relative flex items-center group">
-                  <KeyRound className="absolute left-3.5 size-5 text-stone-400 group-focus-within:text-amber-500 transition-colors" />
-                  <input
-                    id="password"
-                    name="password"
-                    type="password"
-                    autoComplete={isLogin ? "current-password" : "new-password"}
-                    required
-                    className="bg-white/50 text-stone-900 placeholder-stone-400 block w-full rounded-xl border border-stone-200/80 shadow-[0_2px_10px_-3px_rgba(0,0,0,0.05)] focus:border-amber-400 focus:ring-amber-400 focus:bg-white pl-11 pr-4 py-3.5 transition-all duration-200 outline-none"
-                    placeholder="Nhập mật khẩu"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                  />
-                </div>
-              </div>
-
-              <AnimatePresence>
-                {!isLogin && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0, marginTop: 0 }}
-                    animate={{ opacity: 1, height: "auto", marginTop: 16 }}
-                    exit={{ opacity: 0, height: 0, marginTop: 0 }}
-                    transition={{ duration: 0.3 }}
-                    className="relative overflow-hidden"
-                  >
-                    <label
-                      htmlFor="confirmPassword"
-                      className="block text-[13px] font-semibold text-stone-600 mb-1.5 ml-1"
-                    >
-                      Xác nhận mật khẩu
-                    </label>
-                    <div className="relative flex items-center group">
-                      <KeyRound className="absolute left-3.5 size-5 text-stone-400 group-focus-within:text-amber-500 transition-colors" />
-                      <input
-                        id="confirmPassword"
-                        name="confirmPassword"
-                        type="password"
-                        autoComplete="new-password"
-                        required={!isLogin}
-                        className="bg-white/50 text-stone-900 placeholder-stone-400 block w-full rounded-xl border border-stone-200/80 shadow-[0_2px_10px_-3px_rgba(0,0,0,0.05)] focus:border-amber-400 focus:ring-amber-400 focus:bg-white pl-11 pr-4 py-3.5 transition-all duration-200 outline-none"
-                        placeholder="Nhập lại mật khẩu"
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                      />
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-
-            <AnimatePresence>
               {error && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10, height: 0 }}
-                  animate={{ opacity: 1, y: 0, height: "auto" }}
-                  exit={{ opacity: 0, y: -10, height: 0 }}
-                  className="text-red-700 text-[13px] text-center bg-red-50 p-3 rounded-xl border border-red-100/50 font-medium"
+                <div
+                  className="px-3 py-2.5 rounded text-[13px] text-center border"
+                  style={{
+                    background: "rgba(220, 38, 38, 0.08)",
+                    borderColor: "rgba(220, 38, 38, 0.25)",
+                    color: "#b91c1c",
+                  }}
                 >
                   {error}
-                </motion.div>
+                </div>
               )}
-
               {successMessage && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10, height: 0 }}
-                  animate={{ opacity: 1, y: 0, height: "auto" }}
-                  exit={{ opacity: 0, y: -10, height: 0 }}
-                  className="text-teal-700 text-[13px] text-center bg-teal-50 p-3 rounded-xl border border-teal-100/50 font-medium"
+                <div
+                  className="px-3 py-2.5 rounded text-[13px] text-center border"
+                  style={{
+                    background: "rgba(5, 150, 105, 0.08)",
+                    borderColor: "rgba(5, 150, 105, 0.25)",
+                    color: "#047857",
+                  }}
                 >
                   {successMessage}
-                </motion.div>
+                </div>
               )}
-            </AnimatePresence>
 
-            <div className="flex flex-col gap-4 pt-4">
               <button
                 type="submit"
                 disabled={loading}
-                className="group relative w-full flex justify-center items-center gap-2 py-4 px-4 text-[15px] font-bold rounded-xl text-white bg-stone-900 hover:bg-stone-800 border border-stone-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-stone-900 disabled:opacity-70 disabled:cursor-wait transition-all duration-300 shadow-xl shadow-stone-900/10 hover:shadow-2xl hover:shadow-stone-900/20 hover:-translate-y-0.5"
+                className="group relative w-full px-5 py-4 mt-3 font-medium text-[12px] sm:text-[13px] tracking-[0.22em] uppercase transition-all hover:-translate-y-px disabled:opacity-60 disabled:cursor-wait"
+                style={{
+                  fontFamily: "var(--font-jetbrains-mono), monospace",
+                  background: "var(--l-btn-bg)",
+                  color: "var(--l-btn-fg)",
+                }}
+                onMouseEnter={(e) => {
+                  if (!loading)
+                    e.currentTarget.style.background =
+                      "var(--l-btn-bg-hover)";
+                }}
+                onMouseLeave={(e) => {
+                  if (!loading)
+                    e.currentTarget.style.background = "var(--l-btn-bg)";
+                }}
               >
-                {loading ? (
-                  <span className="flex items-center gap-2.5">
-                    <svg
-                      className="animate-spin -ml-1 h-4 w-4 text-white"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      ></circle>
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      ></path>
-                    </svg>
-                    Đang xử lý...
-                  </span>
-                ) : (
-                  <>
-                    {isLogin ? "Đăng nhập" : "Tạo tài khoản"}
-                    {!isLogin && <UserPlus className="size-4 ml-1" />}
-                  </>
-                )}
+                <span
+                  className="absolute inset-1 border pointer-events-none"
+                  style={{ borderColor: "var(--l-btn-border)" }}
+                />
+                <span className="relative">
+                  {loading
+                    ? "Đang xử lý..."
+                    : isLogin
+                      ? "Đăng nhập"
+                      : "Tạo tài khoản"}
+                </span>
               </button>
 
-              <div className="relative flex items-center py-2 opacity-60">
-                <div className="grow border-t border-stone-200"></div>
-                <span className="shrink-0 mx-4 text-stone-400 text-[11px] uppercase tracking-wider font-bold">
-                  Hoặc
-                </span>
-                <div className="grow border-t border-stone-200"></div>
+              <div
+                className="flex items-center gap-3.5 my-5 text-[10px] tracking-[0.3em] uppercase"
+                style={{
+                  fontFamily: "var(--font-jetbrains-mono), monospace",
+                  color: "var(--l-muted)",
+                }}
+              >
+                <div
+                  className="flex-1 h-px"
+                  style={{ background: "var(--l-line)" }}
+                />
+                <span>Hoặc</span>
+                <div
+                  className="flex-1 h-px"
+                  style={{ background: "var(--l-line)" }}
+                />
               </div>
 
               <button
@@ -334,34 +414,114 @@ export default function LoginPage() {
                   setError(null);
                   setSuccessMessage(null);
                 }}
-                className="w-full text-sm font-semibold text-stone-600 hover:text-stone-900 bg-white hover:bg-stone-50 border border-stone-200/80 py-3.5 rounded-xl shadow-[0_2px_8px_-3px_rgba(0,0,0,0.05)] focus:outline-none transition-all duration-200"
+                className="w-full px-5 py-3.5 border text-[14px] sm:text-[14.5px] transition-all hover:-translate-y-px"
+                style={{
+                  fontFamily: "var(--font-lora), var(--font-playfair), serif",
+                  color: "var(--l-ink)",
+                  borderColor: "var(--l-card-border)",
+                  background: "transparent",
+                }}
               >
-                {isLogin
-                  ? "Chưa có tài khoản? Đăng ký ngay"
-                  : "Đã có tài khoản? Đăng nhập"}
+                {isLogin ? (
+                  <>
+                    Chưa có tài khoản?{" "}
+                    <b
+                      className="font-semibold"
+                      style={{ color: "var(--l-bronze-deep)" }}
+                    >
+                      Đăng ký ngay
+                    </b>
+                  </>
+                ) : (
+                  <>
+                    Đã có tài khoản?{" "}
+                    <b
+                      className="font-semibold"
+                      style={{ color: "var(--l-bronze-deep)" }}
+                    >
+                      Đăng nhập
+                    </b>
+                  </>
+                )}
               </button>
-            </div>
-          </form>
-        </motion.div>
+            </form>
+          </div>
+        </div>
       </div>
+    </div>
+  );
+}
 
-      <Link
-        href="/"
-        className="absolute top-6 left-6 z-20 flex items-center gap-2 text-stone-500 hover:text-stone-900 font-semibold text-sm transition-all duration-300 group bg-white/60 px-5 py-2.5 rounded-full shadow-sm border border-stone-200 hover:border-stone-300 hover:shadow-md"
+function Field({
+  label,
+  id,
+  type,
+  autoComplete,
+  placeholder,
+  value,
+  onChange,
+  icon,
+  theme,
+}: {
+  label: string;
+  id: string;
+  type: string;
+  autoComplete?: string;
+  placeholder: string;
+  value: string;
+  onChange: (v: string) => void;
+  icon: React.ReactNode;
+  theme: Theme;
+}) {
+  const [focused, setFocused] = useState(false);
+  return (
+    <div>
+      <label
+        htmlFor={id}
+        className="block font-medium text-[10px] tracking-[0.22em] uppercase mb-2"
+        style={{
+          fontFamily: "var(--font-jetbrains-mono), monospace",
+          color: "var(--l-bronze-deep)",
+        }}
       >
-        <ArrowLeft className="size-4 group-hover:-translate-x-1 transition-transform" />
-        Trang chủ
-      </Link>
-
-      <Link
-        href="/about"
-        className="absolute top-6 right-6 z-20 flex items-center gap-2 text-stone-500 hover:text-stone-900 font-semibold text-sm transition-all duration-300 group bg-white/60 px-5 py-2.5 rounded-full shadow-sm border border-stone-200 hover:border-stone-300 hover:shadow-md"
+        {label}
+      </label>
+      <div
+        className="flex items-center gap-2.5 px-4 py-3 border transition-all"
+        style={{
+          borderColor: focused
+            ? "var(--l-bronze-deep)"
+            : "var(--l-card-border)",
+          background:
+            theme === "light"
+              ? focused
+                ? "rgba(255,250,240,0.96)"
+                : "rgba(255,250,240,0.7)"
+              : focused
+                ? "rgba(74,55,37,0.8)"
+                : "rgba(60,44,30,0.55)",
+          boxShadow: focused ? "0 0 0 3px rgba(194,138,61,0.14)" : "none",
+        }}
       >
-        <Info className="size-4 group-hover:scale-110 transition-transform" />
-        Giới thiệu
-      </Link>
-
-      <Footer className="bg-transparent relative z-10 border-none mt-auto" />
+        <span style={{ color: "var(--l-muted)" }}>{icon}</span>
+        <input
+          id={id}
+          name={id}
+          type={type}
+          autoComplete={autoComplete}
+          placeholder={placeholder}
+          required
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          className="flex-1 bg-transparent border-none outline-none text-[15px]"
+          style={{
+            fontFamily: "var(--font-lora), var(--font-playfair), serif",
+            color: "var(--l-ink)",
+          }}
+        />
+      </div>
     </div>
   );
 }
