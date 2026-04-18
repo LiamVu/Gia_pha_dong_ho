@@ -28,19 +28,6 @@ export default async function EventsPage() {
     <DashboardProvider>
       <main className="relative max-w-[1060px] mx-auto w-full px-5 sm:px-7 pt-6 sm:pt-8 pb-14">
         <header className="mb-6 sm:mb-7">
-          <div
-            className="inline-flex items-center gap-3 text-[10px] tracking-[0.28em] uppercase mb-2.5"
-            style={{
-              fontFamily: "var(--font-jetbrains-mono), monospace",
-              color: "var(--l-bronze-deep)",
-            }}
-          >
-            <span
-              className="inline-block w-[22px] h-px"
-              style={{ background: "var(--l-bronze)" }}
-            />
-            Sự kiện
-          </div>
           <h1
             className="font-semibold text-[32px] sm:text-[42px] leading-[1.1] tracking-tight m-0"
             style={{
