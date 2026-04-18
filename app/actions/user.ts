@@ -1,7 +1,8 @@
 "use server";
 
 import { UserRole } from "@/types";
-import { getSupabase } from "@/utils/supabase/queries";
+import { createAdminClient } from "@/utils/supabase/admin";
+import { getSupabase, getIsAdmin } from "@/utils/supabase/queries";
 import { revalidatePath } from "next/cache";
 
 export async function changeUserRole(userId: string, newRole: UserRole) {
@@ -21,14 +22,26 @@ export async function changeUserRole(userId: string, newRole: UserRole) {
 }
 
 export async function deleteUser(userId: string) {
-  const supabase = await getSupabase();
-  const { error } = await supabase.rpc("delete_user", {
-    target_user_id: userId,
-  });
+  if (!(await getIsAdmin())) return { error: "Access denied." };
 
-  if (error) {
-    console.error("Failed to delete user:", error);
-    return { error: error.message };
+  const supabase = await getSupabase();
+  const {
+    data: { user: currentUser },
+  } = await supabase.auth.getUser();
+  if (currentUser?.id === userId) {
+    return { error: "Cannot delete yourself." };
+  }
+
+  try {
+    const admin = createAdminClient();
+    const { error } = await admin.auth.admin.deleteUser(userId);
+    if (error) {
+      console.error("Failed to delete user:", error);
+      return { error: error.message };
+    }
+  } catch (err) {
+    const e = err as Error;
+    return { error: e.message };
   }
 
   revalidatePath("/dashboard/users");
@@ -51,18 +64,38 @@ export async function adminCreateUser(formData: FormData) {
     return { error: "Email và mật khẩu là bắt buộc." };
   }
 
-  const supabase = await getSupabase();
+  if (!(await getIsAdmin())) return { error: "Access denied." };
 
-  const { error } = await supabase.rpc("admin_create_user", {
-    new_email: email,
-    new_password: password,
-    new_role: role,
-    new_active: isActive,
-  });
+  try {
+    const admin = createAdminClient();
+    const { data: created, error: createErr } = await admin.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+    });
+    if (createErr || !created.user) {
+      console.error("Failed to create auth user:", createErr);
+      return { error: createErr?.message ?? "Không tạo được user." };
+    }
 
-  if (error) {
-    console.error("Failed to create user:", error);
-    return { error: error.message };
+    // Upsert profile: on_auth_user_created trigger may have already created it as 'member'
+    const { error: profileErr } = await admin
+      .from("profiles")
+      .upsert(
+        {
+          id: created.user.id,
+          role,
+          is_active: isActive,
+        },
+        { onConflict: "id" },
+      );
+    if (profileErr) {
+      console.error("Failed to set profile:", profileErr);
+      return { error: profileErr.message };
+    }
+  } catch (err) {
+    const e = err as Error;
+    return { error: e.message };
   }
 
   revalidatePath("/dashboard/users");
