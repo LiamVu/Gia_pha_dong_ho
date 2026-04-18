@@ -1,6 +1,6 @@
 import { memo } from "react";
 
-const STROKE = "#5e3a17";
+const STROKE = "currentColor";
 
 function birdRing() {
   const birds = 18;

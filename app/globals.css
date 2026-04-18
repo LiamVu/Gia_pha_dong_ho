@@ -42,20 +42,59 @@ select {
 }
 
 /* ============== Đông Sơn landing theme ============== */
+.landing-root {
+  /* defaults = light (giấy dó) */
+  --l-bg: #efe6d2;
+  --l-paper-a: #f6ecd4;
+  --l-paper-b: #e8d8b6;
+  --l-paper-c: #d9c69a;
+  --l-ink: #1c1410;
+  --l-ink-soft: #3a2d20;
+  --l-muted: #6b5a46;
+  --l-stroke: #5e3a17; /* drum line colour */
+  --l-bronze: #8a5a2b;
+  --l-bronze-deep: #5e3a17;
+  --l-bronze-glow: #c28a3d;
+  --l-line: rgba(94, 58, 23, 0.25);
+  --l-card: rgba(255, 250, 240, 0.72);
+  --l-card-hover: rgba(255, 250, 240, 0.92);
+  --l-card-border: rgba(94, 58, 23, 0.18);
+  --l-btn-bg: #1c1410;
+  --l-btn-fg: #f3e9d0;
+  --l-btn-bg-hover: #5e3a17;
+  --l-btn-border: rgba(243, 233, 208, 0.25);
+  --l-grain-opacity: 0.35;
+  --l-drum-opacity: 0.42;
+}
+.landing-root[data-theme="dark"] {
+  --l-bg: #2a1f18;
+  --l-paper-a: #3a2a1c;
+  --l-paper-b: #2a1f18;
+  --l-paper-c: #1a120d;
+  --l-ink: #f3e9d0;
+  --l-ink-soft: #d4c19a;
+  --l-muted: #8a7860;
+  --l-stroke: #c28a3d;
+  --l-bronze: #c28a3d;
+  --l-bronze-deep: #d9a04f;
+  --l-bronze-glow: #e8bd6a;
+  --l-line: rgba(194, 138, 61, 0.25);
+  --l-card: rgba(60, 44, 30, 0.55);
+  --l-card-hover: rgba(74, 55, 37, 0.75);
+  --l-card-border: rgba(194, 138, 61, 0.2);
+  --l-btn-bg: #c28a3d;
+  --l-btn-fg: #1c1410;
+  --l-btn-bg-hover: #d9a04f;
+  --l-btn-border: rgba(28, 20, 16, 0.25);
+  --l-grain-opacity: 0.25;
+  --l-drum-opacity: 0.32;
+}
 .landing-paper {
   background: radial-gradient(
     ellipse at 50% 40%,
-    #f6ecd4 0%,
-    #e8d8b6 55%,
-    #d9c69a 100%
-  );
-}
-.landing-paper-dark {
-  background: radial-gradient(
-    ellipse at 50% 40%,
-    #3a2a1c 0%,
-    #2a1f18 55%,
-    #1a120d 100%
+    var(--l-paper-a) 0%,
+    var(--l-paper-b) 55%,
+    var(--l-paper-c) 100%
   );
 }
 .landing-grain {
