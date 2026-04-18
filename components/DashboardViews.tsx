@@ -9,20 +9,6 @@ import dynamic from "next/dynamic";
 
 const FamilyTree = dynamic(() => import("@/components/FamilyTree"));
 const MindmapTree = dynamic(() => import("@/components/MindmapTree"));
-const BubbleMapTree = dynamic(
-  () =>
-    import("@/components/BubbleMapTree").catch((err) => {
-      console.error("Failed to load BubbleMapTree:", err);
-      return {
-        default: () => (
-          <div className="flex absolute inset-0 items-center justify-center p-4 text-center bg-stone-50 rounded-2xl border border-stone-200/60 shadow-inner text-stone-500">
-            Tính năng này không được hỗ trợ trên trình duyệt của bạn. Vui lòng cập nhật hoặc sử dụng trình duyệt khác.
-          </div>
-        ),
-      };
-    }),
-  { ssr: false },
-);
 
 interface DashboardViewsProps {
   persons: Person[];
@@ -121,14 +107,6 @@ export default function DashboardViews({
           )}
           {currentView === "mindmap" && (
             <MindmapTree
-              personsMap={personsMap}
-              relationships={relationships}
-              roots={roots}
-              canEdit={canEdit}
-            />
-          )}
-          {currentView === "bubble" && (
-            <BubbleMapTree
               personsMap={personsMap}
               relationships={relationships}
               roots={roots}

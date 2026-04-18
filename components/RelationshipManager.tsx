@@ -279,6 +279,10 @@ export default function RelationshipManager({
 
   // Search for people to add
   useEffect(() => {
+    if (selectedTargetId) {
+      setSearchResults([]);
+      return;
+    }
     const searchPeople = async () => {
       if (searchTerm.length < 2) {
         setSearchResults([]);
@@ -297,7 +301,7 @@ export default function RelationshipManager({
 
     const timeoutId = setTimeout(searchPeople, 300);
     return () => clearTimeout(timeoutId);
-  }, [searchTerm, personId, supabase]);
+  }, [searchTerm, personId, supabase, selectedTargetId]);
 
   // Fetch recent members when opening Add form
   useEffect(() => {
@@ -406,7 +410,6 @@ export default function RelationshipManager({
     } catch (err: unknown) {
       const e = err as Error;
       setError("Không thể thêm mối quan hệ: " + e.message);
-      setTimeout(() => setError(null), 5000);
     } finally {
       setProcessing(false);
     }
@@ -889,7 +892,10 @@ export default function RelationshipManager({
                 type="text"
                 placeholder="Nhập tên để tìm..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  if (selectedTargetId) setSelectedTargetId(null);
+                }}
                 className="bg-white text-stone-900 placeholder-stone-400 block w-full text-sm rounded-lg border-stone-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 p-2 sm:p-2.5 border transition-colors"
               />
               {/* Search Results Dropdown */}
@@ -955,6 +961,25 @@ export default function RelationshipManager({
               )}
             </div>
 
+            {error && (
+              <div className="text-sm text-red-600 bg-red-50 p-3 rounded-lg border border-red-100 flex items-start gap-2">
+                <svg
+                  className="w-4 h-4 shrink-0 text-red-500 mt-0.5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                  />
+                </svg>
+                <span>{error}</span>
+              </div>
+            )}
+
             <div className="flex gap-2 pt-2">
               <button
                 onClick={handleAddRelationship}
@@ -969,6 +994,7 @@ export default function RelationshipManager({
                   setSelectedTargetId(null);
                   setSearchTerm("");
                   setNewRelNote("");
+                  setError(null);
                 }}
                 className="px-4 py-2 sm:py-2.5 bg-white border border-stone-300 text-stone-700 rounded-md sm:rounded-lg text-sm hover:bg-stone-50 transition-colors"
               >
