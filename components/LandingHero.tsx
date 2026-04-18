@@ -5,12 +5,10 @@ import { ArrowRight, Moon, Sun } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
-interface LandingHeroProps {
-  siteName: string;
-}
 
 type Theme = "light" | "dark";
 const THEME_KEY = "giapha-landing-theme";
+const BRAND_NAME = "YOUR TREE";
 
 const CornerOrnament = ({ className }: { className?: string }) => (
   <svg
@@ -94,7 +92,7 @@ function readSavedTheme(): Theme {
   return saved === "dark" || saved === "light" ? (saved as Theme) : "light";
 }
 
-export default function LandingHero({ siteName }: LandingHeroProps) {
+export default function LandingHero() {
   const [theme, setTheme] = useState<Theme>(readSavedTheme);
 
   useEffect(() => {
@@ -184,7 +182,7 @@ export default function LandingHero({ siteName }: LandingHeroProps) {
                 className="font-serif font-semibold text-[16px] sm:text-[22px] tracking-wide leading-tight"
                 style={{ color: "var(--l-ink)" }}
               >
-                {siteName}
+                {BRAND_NAME}
               </div>
               <div
                 className="text-[9px] sm:text-[10px] tracking-[0.22em] uppercase mt-0.5 hidden sm:block"
@@ -241,7 +239,7 @@ export default function LandingHero({ siteName }: LandingHeroProps) {
                 boxShadow: "0 0 0 3px rgba(194,138,61,0.25)",
               }}
             />
-            {siteName} · Nền tảng phả hệ số
+            {BRAND_NAME} · Nền tảng phả hệ số
           </div>
 
           <div
@@ -418,7 +416,7 @@ export default function LandingHero({ siteName }: LandingHeroProps) {
             color: "var(--l-muted)",
           }}
         >
-          <span>© {siteName} · MMXXVI</span>
+          <span>© {BRAND_NAME} · MMXXVI</span>
           <span className="hidden sm:inline">
             Họa tiết lấy cảm hứng từ trống đồng Đông Sơn
           </span>
