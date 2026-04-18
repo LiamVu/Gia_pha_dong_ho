@@ -15,6 +15,7 @@ interface DashboardState {
   setView: (view: ViewMode) => void;
   rootId: string | null;
   setRootId: (id: string | null) => void;
+  readOnly: boolean;
 }
 
 export const DashboardContext = createContext<DashboardState | undefined>(
@@ -26,11 +27,13 @@ export function DashboardProvider({
   initialView,
   initialRootId,
   initialShowAvatar,
+  readOnly = false,
 }: {
   children: React.ReactNode;
   initialView?: ViewMode;
   initialRootId?: string | null;
   initialShowAvatar?: boolean;
+  readOnly?: boolean;
 }) {
   const searchParams = useSearchParams();
 
@@ -74,6 +77,7 @@ export function DashboardProvider({
 
   // Sync to URL silently
   const updateModalId = (id: string | null) => {
+    if (readOnly && id) return;
     setMemberModalId(id);
     if (typeof window !== "undefined") {
       const newUrl = new URL(window.location.href);
@@ -134,6 +138,7 @@ export function DashboardProvider({
         setView,
         rootId,
         setRootId,
+        readOnly,
       }}
     >
       {children}
@@ -157,6 +162,7 @@ export function useDashboard(): DashboardState {
       setView: () => {},
       rootId: null,
       setRootId: () => {},
+      readOnly: false,
     };
   }
   return context;

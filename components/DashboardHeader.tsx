@@ -1,5 +1,6 @@
 import config from "@/app/config";
 import HeaderMenu from "@/components/HeaderMenu";
+import ShareButton from "@/components/ShareButton";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -26,7 +27,8 @@ export default function DashboardHeader() {
             </h1>
           </Link>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 sm:gap-4">
+          <ShareButton />
           <HeaderMenu />
         </div>
       </div>
