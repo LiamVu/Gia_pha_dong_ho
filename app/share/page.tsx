@@ -1,6 +1,8 @@
 import { DashboardProvider } from "@/components/DashboardContext";
 import DashboardViews from "@/components/DashboardViews";
+import SharePersonPopover from "@/components/SharePersonPopover";
 import ViewToggle, { ViewMode } from "@/components/ViewToggle";
+import { Person } from "@/types";
 import { createAdminClient } from "@/utils/supabase/admin";
 
 interface PageProps {
@@ -102,6 +104,7 @@ export default async function SharePage({ searchParams }: PageProps) {
         relationships={relationships as never}
         canEdit={false}
       />
+      <SharePersonPopover persons={persons as unknown as Person[]} />
     </DashboardProvider>
   );
 }

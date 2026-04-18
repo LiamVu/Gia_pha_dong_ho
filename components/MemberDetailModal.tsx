@@ -1,10 +1,11 @@
 "use client";
 
+import ContributeForm from "@/components/ContributeForm";
 import MemberDetailContent from "@/components/MemberDetailContent";
 import MemberForm from "@/components/MemberForm";
 import { Person } from "@/types";
 import { AnimatePresence, motion } from "framer-motion";
-import { AlertCircle, ArrowLeft, Edit2, ExternalLink, X } from "lucide-react";
+import { AlertCircle, ArrowLeft, Edit2, ExternalLink, MessageSquarePlus, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
@@ -18,10 +19,11 @@ export default function MemberDetailModal() {
     showCreateMember,
     setShowCreateMember,
   } = useDashboard();
-  const { isAdmin, isEditor: canEdit, supabase } = useUser();
+  const { user, isAdmin, isEditor: canEdit, supabase } = useUser();
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [showContribute, setShowContribute] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -188,23 +190,35 @@ export default function MemberDetailModal() {
                   <span className="hidden sm:inline">Quay lại</span>
                 </button>
               ) : (
-                canEdit &&
                 person && (
                   <>
-                    <Link
-                      href={`/dashboard/members/${person.id}`}
-                      className="flex items-center gap-1.5 px-4 py-2 bg-amber-100/80 text-amber-800 rounded-full hover:bg-amber-200 font-semibold text-sm shadow-sm border border-amber-200/50 transition-colors"
-                    >
-                      <ExternalLink className="size-4" />
-                      <span className="hidden sm:inline">Xem</span>
-                    </Link>
-                    <button
-                      onClick={() => setIsEditing(true)}
-                      className="flex items-center gap-1.5 px-4 py-2 bg-amber-100/80 text-amber-800 rounded-full hover:bg-amber-200 font-semibold text-sm shadow-sm border border-amber-200/50 transition-colors"
-                    >
-                      <Edit2 className="size-4" />
-                      <span className="hidden sm:inline">Chỉnh sửa</span>
-                    </button>
+                    {canEdit && (
+                      <Link
+                        href={`/dashboard/members/${person.id}`}
+                        className="flex items-center gap-1.5 px-4 py-2 bg-amber-100/80 text-amber-800 rounded-full hover:bg-amber-200 font-semibold text-sm shadow-sm border border-amber-200/50 transition-colors"
+                      >
+                        <ExternalLink className="size-4" />
+                        <span className="hidden sm:inline">Xem</span>
+                      </Link>
+                    )}
+                    {user && (
+                      <button
+                        onClick={() => setShowContribute(true)}
+                        className="flex items-center gap-1.5 px-4 py-2 bg-sky-100/80 text-sky-800 rounded-full hover:bg-sky-200 font-semibold text-sm shadow-sm border border-sky-200/50 transition-colors"
+                      >
+                        <MessageSquarePlus className="size-4" />
+                        <span className="hidden sm:inline">Đóng góp</span>
+                      </button>
+                    )}
+                    {canEdit && (
+                      <button
+                        onClick={() => setIsEditing(true)}
+                        className="flex items-center gap-1.5 px-4 py-2 bg-amber-100/80 text-amber-800 rounded-full hover:bg-amber-200 font-semibold text-sm shadow-sm border border-amber-200/50 transition-colors"
+                      >
+                        <Edit2 className="size-4" />
+                        <span className="hidden sm:inline">Chỉnh sửa</span>
+                      </button>
+                    )}
                   </>
                 )
               )}
@@ -313,6 +327,18 @@ export default function MemberDetailModal() {
                 </motion.div>
               ) : null}
             </AnimatePresence>
+
+            {showContribute && person && (
+              <div className="absolute inset-0 z-30 flex items-center justify-center bg-stone-900/30 backdrop-blur-sm">
+                <div className="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 max-h-[85vh] overflow-auto border border-stone-200">
+                  <ContributeForm
+                    personId={person.id}
+                    personName={person.full_name}
+                    onClose={() => setShowContribute(false)}
+                  />
+                </div>
+              </div>
+            )}
           </motion.div>
         </motion.div>
       )}

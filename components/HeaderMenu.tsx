@@ -1,17 +1,33 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { BarChart2, ChevronDown, Database, GitMerge, Network, UserCircle, Users } from "lucide-react";
+import { BarChart2, ChevronDown, Database, GitMerge, Inbox, Network, UserCircle, Users } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import LogoutButton from "./LogoutButton";
 import { useUser } from "./UserProvider";
 
 export default function HeaderMenu() {
-  const { user, isAdmin } = useUser();
+  const { user, isAdmin, supabase } = useUser();
   const userEmail = user?.email;
   const [isOpen, setIsOpen] = useState(false);
+  const [pendingCount, setPendingCount] = useState<number | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isAdmin) return;
+    let cancelled = false;
+    (async () => {
+      const { count } = await supabase
+        .from("contributions")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "pending");
+      if (!cancelled) setPendingCount(count ?? 0);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [isAdmin, supabase]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -112,6 +128,22 @@ export default function HeaderMenu() {
                   >
                     <Users className="size-4" />
                     Quản lý Người dùng
+                  </Link>
+
+                  <Link
+                    href="/dashboard/contributions"
+                    onClick={() => setIsOpen(false)}
+                    className="flex items-center justify-between gap-2 px-4 py-2.5 text-sm font-medium text-stone-700 hover:text-amber-700 hover:bg-amber-50 transition-colors"
+                  >
+                    <span className="flex items-center gap-2">
+                      <Inbox className="size-4" />
+                      Kiểm duyệt
+                    </span>
+                    {pendingCount !== null && pendingCount > 0 && (
+                      <span className="text-[11px] font-bold bg-amber-600 text-white px-1.5 py-0.5 rounded-full min-w-[20px] text-center">
+                        {pendingCount}
+                      </span>
+                    )}
                   </Link>
 
                   <Link

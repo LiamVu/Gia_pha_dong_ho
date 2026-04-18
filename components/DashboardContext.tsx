@@ -77,7 +77,6 @@ export function DashboardProvider({
 
   // Sync to URL silently
   const updateModalId = (id: string | null) => {
-    if (readOnly && id) return;
     setMemberModalId(id);
     if (typeof window !== "undefined") {
       const newUrl = new URL(window.location.href);
