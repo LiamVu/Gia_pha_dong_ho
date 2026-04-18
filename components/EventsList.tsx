@@ -1,6 +1,6 @@
 "use client";
 
-import { getZodiacSign } from "@/utils/dateHelpers";
+import { ganZhiToVietnamese, getZodiacSign } from "@/utils/dateHelpers";
 import {
   computeEvents,
   CustomEventRecord,
@@ -334,7 +334,8 @@ export default function EventsList({
       const lMonth = Math.abs(lMonthRaw).toString().padStart(2, "0");
       const lDay = lunar.getDay().toString().padStart(2, "0");
       lunarShort = `${lDay}/${lMonth}${isLeap ? " nhuận" : ""}`;
-      lunarYear = lunar.getYearInGanZhi?.() ?? "";
+      const raw = lunar.getYearInGanZhi?.() ?? "";
+      lunarYear = raw ? ganZhiToVietnamese(raw) : "";
     } catch (e) {
       console.error(e);
     }
@@ -445,7 +446,7 @@ export default function EventsList({
         </div>
         <button
           onClick={handleOpenCreateModal}
-          className="group relative inline-flex items-center gap-2 px-4 py-2.5 uppercase tracking-[0.2em] text-[10.5px] font-medium transition-all hover:-translate-y-px whitespace-nowrap"
+          className="group relative flex items-center justify-center gap-2 w-full sm:w-auto px-4 py-2.5 uppercase tracking-[0.2em] text-[10.5px] font-medium transition-all hover:-translate-y-px whitespace-nowrap"
           style={{
             fontFamily: "var(--font-jetbrains-mono), monospace",
             background: "var(--l-btn-bg)",
@@ -467,68 +468,88 @@ export default function EventsList({
         </button>
       </div>
 
-      {/* ===== Filter chips ===== */}
-      <div className="flex flex-wrap items-center gap-2.5 mb-3.5">
-        {chips.map((chip) => {
-          const active = filter === chip.key;
-          return (
-            <button
-              key={chip.key}
-              onClick={() => {
-                setFilter(chip.key);
-                setShowCount(20);
-              }}
-              className="inline-flex items-center gap-2 px-4 py-2 border text-[13px] sm:text-[14px] transition-all hover:-translate-y-px"
-              style={{
-                fontFamily: "var(--font-lora), var(--font-playfair), serif",
-                borderColor: active ? "var(--l-bronze-deep)" : "var(--l-line)",
-                background: active
-                  ? "var(--l-bronze-glow)"
-                  : "rgba(255,250,240,0.7)",
-                color: active ? "#1c1410" : "var(--l-ink-soft)",
-                fontWeight: active ? 600 : 400,
-              }}
-            >
-              {chip.label}
-              <span
-                className="text-[10px] opacity-70 tracking-[0.1em]"
-                style={{ fontFamily: "var(--font-jetbrains-mono), monospace" }}
+      {/* ===== Filter chips + deceased toggle in one compact row ===== */}
+      <div className="no-scrollbar overflow-x-auto mb-5 -mx-5 sm:mx-0 px-5 sm:px-0">
+        <div className="inline-flex items-center gap-2 flex-nowrap w-max">
+          {chips.map((chip) => {
+            const active = filter === chip.key;
+            return (
+              <button
+                key={chip.key}
+                onClick={() => {
+                  setFilter(chip.key);
+                  setShowCount(20);
+                }}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 border text-[12.5px] sm:text-[13px] transition-all hover:-translate-y-px whitespace-nowrap"
+                style={{
+                  fontFamily: "var(--font-lora), var(--font-playfair), serif",
+                  borderColor: active
+                    ? "var(--l-bronze-deep)"
+                    : "var(--l-line)",
+                  background: active
+                    ? "var(--l-bronze-glow)"
+                    : "rgba(255,250,240,0.7)",
+                  color: active ? "#1c1410" : "var(--l-ink-soft)",
+                  fontWeight: active ? 600 : 400,
+                }}
               >
-                · {chip.count}
-              </span>
-            </button>
-          );
-        })}
-      </div>
+                {chip.label}
+                <span
+                  className="text-[10px] opacity-70 tracking-[0.1em]"
+                  style={{
+                    fontFamily: "var(--font-jetbrains-mono), monospace",
+                  }}
+                >
+                  · {chip.count}
+                </span>
+              </button>
+            );
+          })}
 
-      {/* ===== Toggle: show deceased birthdays ===== */}
-      {filter !== "past" && (
-        <button
-          type="button"
-          onClick={() => setShowDeceasedBirthdays((v) => !v)}
-          className="inline-flex items-center gap-2.5 mb-5 italic text-[13px] sm:text-[13.5px] cursor-pointer"
-          style={{
-            fontFamily: "var(--font-lora), var(--font-playfair), serif",
-            color: "var(--l-ink-soft)",
-          }}
-        >
-          <span
-            className="size-[18px] grid place-items-center border transition-all"
-            style={{
-              background: showDeceasedBirthdays
-                ? "var(--l-bronze-deep)"
-                : "rgba(255,250,240,0.6)",
-              borderColor: showDeceasedBirthdays
-                ? "var(--l-bronze-deep)"
-                : "var(--l-line)",
-              color: showDeceasedBirthdays ? "#f3e9d0" : "transparent",
-            }}
-          >
-            <Check className="size-2.5" strokeWidth={3} />
-          </span>
-          Hiển thị sinh nhật của người đã mất
-        </button>
-      )}
+          {filter !== "past" && (
+            <>
+              <span
+                aria-hidden="true"
+                className="shrink-0 w-px h-5 mx-1"
+                style={{ background: "var(--l-line)" }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowDeceasedBirthdays((v) => !v)}
+                aria-pressed={showDeceasedBirthdays}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 border text-[12.5px] sm:text-[13px] transition-all hover:-translate-y-px whitespace-nowrap"
+                style={{
+                  fontFamily: "var(--font-lora), var(--font-playfair), serif",
+                  borderColor: showDeceasedBirthdays
+                    ? "var(--l-bronze-deep)"
+                    : "var(--l-line)",
+                  background: showDeceasedBirthdays
+                    ? "var(--l-bronze-glow)"
+                    : "rgba(255,250,240,0.7)",
+                  color: showDeceasedBirthdays ? "#1c1410" : "var(--l-ink-soft)",
+                  fontWeight: showDeceasedBirthdays ? 600 : 400,
+                }}
+              >
+                <span
+                  className="size-[11px] grid place-items-center border transition-all shrink-0"
+                  style={{
+                    background: showDeceasedBirthdays
+                      ? "#1c1410"
+                      : "rgba(255,250,240,0.6)",
+                    borderColor: showDeceasedBirthdays
+                      ? "#1c1410"
+                      : "var(--l-line)",
+                    color: showDeceasedBirthdays ? "#f3e9d0" : "transparent",
+                  }}
+                >
+                  <Check className="size-[9px]" strokeWidth={3} />
+                </span>
+                Gồm người đã mất
+              </button>
+            </>
+          )}
+        </div>
+      </div>
 
       {/* ===== Event list ===== */}
       {visible.length === 0 ? (

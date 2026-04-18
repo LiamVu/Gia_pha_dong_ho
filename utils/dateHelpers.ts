@@ -215,7 +215,7 @@ const DIA_CHI: Record<string, string> = {
 /**
  * Convert a Chinese Gan-Zhi string (e.g. "丙午") to Vietnamese (e.g. "Bính Ngọ").
  */
-function ganZhiToVietnamese(ganZhi: string): string {
+export function ganZhiToVietnamese(ganZhi: string): string {
   if (!ganZhi || ganZhi.length < 2) return ganZhi;
   const can = THIEN_CAN[ganZhi[0]] ?? ganZhi[0];
   const chi = DIA_CHI[ganZhi[1]] ?? ganZhi[1];

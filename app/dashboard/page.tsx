@@ -126,9 +126,11 @@ export default async function DashboardLaunchpad() {
 
   return (
     <main className="relative max-w-[1160px] mx-auto w-full px-5 sm:px-7 pb-14 pt-6 sm:pt-8">
-      {/* ===== Hero card (date + upcoming events) ===== */}
-      <section
-        className="relative backdrop-blur-md border p-6 sm:p-8 mb-6 grid gap-6 sm:gap-8 lg:grid-cols-[1fr_1fr_auto] lg:items-center"
+      {/* ===== Hero card (date + upcoming events) — click to open events ===== */}
+      <Link
+        href="/dashboard/events"
+        aria-label="Xem tất cả sự kiện"
+        className="group relative block backdrop-blur-md border p-6 sm:p-8 mb-6 grid gap-6 sm:gap-8 lg:grid-cols-[1fr_1fr_auto] lg:items-center transition-all hover:-translate-y-0.5"
         style={{
           background: "var(--l-card)",
           borderColor: "var(--l-card-border)",
@@ -290,11 +292,9 @@ export default async function DashboardLaunchpad() {
           )}
         </div>
 
-        {/* Arrow to /events */}
-        <Link
-          href="/dashboard/events"
-          aria-label="Xem tất cả sự kiện"
-          className="hidden lg:grid place-items-center size-10 border transition-all hover:-translate-y-px self-start"
+        {/* Arrow (visual affordance — whole card is already a link) */}
+        <span
+          className="hidden lg:grid place-items-center size-10 border transition-transform group-hover:translate-x-0.5 self-start pointer-events-none"
           style={{
             borderColor: "var(--l-line)",
             background: "rgba(255,250,240,0.6)",
@@ -302,8 +302,8 @@ export default async function DashboardLaunchpad() {
           }}
         >
           <ArrowRight className="size-4" />
-        </Link>
-      </section>
+        </span>
+      </Link>
 
       {/* ===== Public features ===== */}
       <FeatureGrid items={publicFeatures} />
