@@ -2,6 +2,7 @@ import config from "@/app/config";
 import DashboardHeader from "@/components/DashboardHeader";
 import Footer from "@/components/Footer";
 import LogoutButton from "@/components/LogoutButton";
+import ParchmentBackground from "@/components/ParchmentBackground";
 import { UserProvider } from "@/components/UserProvider";
 import { getProfile, getUser } from "@/utils/supabase/queries";
 import Link from "next/link";
@@ -76,13 +77,24 @@ export default async function DashboardLayout({
 
   return (
     <UserProvider user={user} profile={profile}>
-      <div className="min-h-screen bg-stone-50 text-stone-900 flex flex-col font-sans">
-        <DashboardHeader />
-        {children}
-        <Footer
-          className="mt-auto bg-white border-t border-stone-200"
-          showDisclaimer={true}
-        />
+      <div
+        className="landing-root relative min-h-screen flex flex-col"
+        data-theme="light"
+        style={{
+          background: "var(--l-bg)",
+          color: "var(--l-ink)",
+          fontFamily: "var(--font-lora), var(--font-playfair), serif",
+        }}
+      >
+        <ParchmentBackground />
+        <div className="relative z-10 flex flex-col flex-1">
+          <DashboardHeader />
+          {children}
+          <Footer
+            className="mt-auto bg-transparent border-none"
+            showDisclaimer={true}
+          />
+        </div>
       </div>
     </UserProvider>
   );

@@ -44,17 +44,30 @@ export default function HeaderMenu() {
     <div className="relative" ref={menuRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 pl-2 pr-4 py-1.5 rounded-full hover:bg-stone-100 transition-all duration-200 border border-transparent hover:border-stone-200"
+        className="inline-flex items-center gap-1.5 pl-1 pr-2.5 py-1 rounded-full border backdrop-blur-sm transition-all hover:-translate-y-px"
+        style={{
+          borderColor: "var(--l-line)",
+          background: "rgba(255,250,240,0.65)",
+          color: "var(--l-bronze-deep)",
+          fontFamily: "var(--font-jetbrains-mono), monospace",
+        }}
       >
-        <div className="size-8 rounded-full bg-linear-to-br from-amber-200 to-amber-100 text-amber-800 flex items-center justify-center font-bold shadow-sm ring-1 ring-amber-300/50">
+        <div
+          className="size-7 rounded-full grid place-items-center font-bold text-[14px]"
+          style={{
+            background: "var(--l-bronze-glow)",
+            color: "#1c1410",
+            fontFamily: "var(--font-lora), var(--font-playfair), serif",
+          }}
+        >
           {userEmail ? (
             userEmail.charAt(0).toUpperCase()
           ) : (
-            <UserCircle className="size-5" />
+            <UserCircle className="size-4" />
           )}
         </div>
         <ChevronDown
-          className={`size-4 text-stone-500 transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`}
+          className={`size-3 transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`}
         />
       </button>
 

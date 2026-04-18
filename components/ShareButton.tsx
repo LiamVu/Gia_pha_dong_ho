@@ -26,16 +26,22 @@ export default function ShareButton() {
     <button
       onClick={handleShare}
       title="Chia sẻ cây gia phả"
-      className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-full border border-stone-200 bg-white/60 text-stone-600 hover:text-amber-700 hover:border-amber-300 hover:bg-amber-50 transition-colors"
+      className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-full border backdrop-blur-sm text-[10px] sm:text-[11px] tracking-[0.18em] uppercase transition-all hover:-translate-y-px"
+      style={{
+        fontFamily: "var(--font-jetbrains-mono), monospace",
+        borderColor: "var(--l-line)",
+        background: "rgba(255,250,240,0.65)",
+        color: "var(--l-bronze-deep)",
+      }}
     >
       {copied ? (
         <>
-          <Check className="size-4 text-green-600" />
-          <span className="hidden sm:inline">Đã copy link</span>
+          <Check className="size-3.5 text-green-700" />
+          <span className="hidden sm:inline">Đã copy</span>
         </>
       ) : (
         <>
-          <Share2 className="size-4" />
+          <Share2 className="size-3.5" />
           <span className="hidden sm:inline">Chia sẻ</span>
         </>
       )}

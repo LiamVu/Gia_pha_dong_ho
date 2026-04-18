@@ -4,10 +4,9 @@ import { getIsAdmin, getSupabase } from "@/utils/supabase/queries";
 import {
   ArrowRight,
   BarChart2,
-  Cake,
   CalendarDays,
   Database,
-  Flower2,
+  Dot,
   GitMerge,
   Network,
   Star,
@@ -15,33 +14,114 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
-/* ── Event type helpers ───────────────────────────────────────────── */
-const eventTypeConfig = {
-  birthday: {
-    icon: Cake,
-    label: "Sinh nhật",
-    color: "text-amber-600",
-    bg: "bg-amber-50",
+const dayNames = [
+  "Chủ Nhật",
+  "Thứ Hai",
+  "Thứ Ba",
+  "Thứ Tư",
+  "Thứ Năm",
+  "Thứ Sáu",
+  "Thứ Bảy",
+];
+
+function formatSolarDate(iso: string): string {
+  const d = new Date(iso);
+  return `${dayNames[d.getDay()]}, ${d.getDate()} tháng ${d.getMonth() + 1}, ${d.getFullYear()}`;
+}
+
+type FeatIconColor = "bronze" | "rose" | "indigo" | "violet" | "patina";
+
+const iconColors: Record<
+  FeatIconColor,
+  { bg: string; border: string; color: string }
+> = {
+  bronze: {
+    bg: "rgba(194,138,61,0.14)",
+    border: "rgba(194,138,61,0.3)",
+    color: "var(--l-bronze-deep)",
   },
-  death_anniversary: {
-    icon: Flower2,
-    label: "Ngày giỗ",
-    color: "text-purple-600",
-    bg: "bg-purple-50",
+  rose: {
+    bg: "rgba(184,95,95,0.12)",
+    border: "rgba(184,95,95,0.28)",
+    color: "#8a3a3a",
   },
-  custom_event: {
-    icon: Star,
-    label: "Sự kiện",
-    color: "text-emerald-600",
-    bg: "bg-emerald-50",
+  indigo: {
+    bg: "rgba(88,90,150,0.12)",
+    border: "rgba(88,90,150,0.28)",
+    color: "#3f4276",
+  },
+  violet: {
+    bg: "rgba(120,88,150,0.12)",
+    border: "rgba(120,88,150,0.28)",
+    color: "#5e3a76",
+  },
+  patina: {
+    bg: "rgba(77,107,90,0.14)",
+    border: "rgba(77,107,90,0.3)",
+    color: "#2d4a3a",
   },
 };
+
+interface FeatItem {
+  title: string;
+  desc: string;
+  href: string;
+  icon: React.ReactNode;
+  color: FeatIconColor;
+}
+
+const publicFeatures: FeatItem[] = [
+  {
+    title: "Cây gia phả",
+    desc: "Xem và tương tác với sơ đồ dòng họ",
+    href: "/dashboard/members",
+    color: "bronze",
+    icon: <Network className="size-5" />,
+  },
+  {
+    title: "Tra cứu danh xưng",
+    desc: "Hệ thống gọi tên họ hàng chuẩn xác",
+    href: "/dashboard/kinship",
+    color: "indigo",
+    icon: <GitMerge className="size-5" />,
+  },
+  {
+    title: "Thống kê gia phả",
+    desc: "Tổng quan dữ liệu và biểu đồ phân tích",
+    href: "/dashboard/stats",
+    color: "violet",
+    icon: <BarChart2 className="size-5" />,
+  },
+];
+
+const adminFeatures: FeatItem[] = [
+  {
+    title: "Quản lý Người dùng",
+    desc: "Phê duyệt tài khoản và phân quyền",
+    href: "/dashboard/users",
+    color: "rose",
+    icon: <Users className="size-5" />,
+  },
+  {
+    title: "Thứ tự gia phả",
+    desc: "Sắp xếp và xem cấu trúc hệ thống",
+    href: "/dashboard/lineage",
+    color: "indigo",
+    icon: <Network className="size-5" />,
+  },
+  {
+    title: "Sao lưu & Phục hồi",
+    desc: "Xuất/Nhập dữ liệu toàn hệ thống",
+    href: "/dashboard/data",
+    color: "patina",
+    icon: <Database className="size-5" />,
+  },
+];
 
 export default async function DashboardLaunchpad() {
   const isAdmin = await getIsAdmin();
   const supabase = await getSupabase();
 
-  /* ── Fetch events data ────────────────────────────────────────── */
   const { data: persons } = await supabase
     .from("persons")
     .select(
@@ -53,258 +133,292 @@ export default async function DashboardLaunchpad() {
     .select("id, name, content, event_date, location, created_by");
 
   const allEvents = computeEvents(persons ?? [], customEvents ?? []);
-  const upcomingEvents = allEvents.filter(
-    (e) => e.daysUntil >= 0 && e.daysUntil <= 30,
-  );
+  const upcomingEvents = allEvents
+    .filter((e) => e.daysUntil >= 0 && e.daysUntil <= 30)
+    .slice(0, 3);
 
   const lunar = getTodayLunar();
 
-  /* ── Feature lists ────────────────────────────────────────────── */
-  const publicFeatures = [
-    {
-      title: "Cây gia phả",
-      description: "Xem và tương tác với sơ đồ dòng họ",
-      icon: <Network className="size-8 text-amber-600" />,
-      href: "/dashboard/members",
-      bgColor: "bg-amber-50",
-      borderColor: "border-amber-200/60",
-      hoverColor: "hover:border-amber-400 hover:shadow-amber-100",
-    },
-    // {
-    //   title: "Sự kiện",
-    //   description: "Quản lý ngày giỗ, họp họ và các dịp quan trọng",
-    //   icon: <CalendarClock className="size-8 text-emerald-600" />,
-    //   href: "/dashboard/events",
-    //   bgColor: "bg-emerald-50",
-    //   borderColor: "border-emerald-200/60",
-    //   hoverColor: "hover:border-emerald-400 hover:shadow-emerald-100",
-    // },
-    {
-      title: "Tra cứu danh xưng",
-      description: "Hệ thống gọi tên họ hàng chuẩn xác",
-      icon: <GitMerge className="size-8 text-blue-600" />,
-      href: "/dashboard/kinship",
-      bgColor: "bg-blue-50",
-      borderColor: "border-blue-200/60",
-      hoverColor: "hover:border-blue-400 hover:shadow-blue-100",
-    },
-    {
-      title: "Thống kê gia phả",
-      description: "Tổng quan dữ liệu và biểu đồ phân tích",
-      icon: <BarChart2 className="size-8 text-purple-600" />,
-      href: "/dashboard/stats",
-      bgColor: "bg-purple-50",
-      borderColor: "border-purple-200/60",
-      hoverColor: "hover:border-purple-400 hover:shadow-purple-100",
-    },
-    // {
-    //   title: "Giới thiệu & Liên hệ",
-    //   description: "Thông tin về ứng dụng và đội ngũ phát triển",
-    //   icon: <Info className="size-8 text-stone-600" />,
-    //   href: "/about",
-    //   bgColor: "bg-stone-50",
-    //   borderColor: "border-stone-200/60",
-    //   hoverColor: "hover:border-stone-400 hover:shadow-stone-100",
-    // },
-  ];
-
-  const adminFeatures = [
-    {
-      title: "Quản lý Người dùng",
-      description: "Phê duyệt tài khoản và phân quyền",
-      icon: <Users className="size-8 text-rose-600" />,
-      href: "/dashboard/users",
-      bgColor: "bg-rose-50",
-      borderColor: "border-rose-200/60",
-      hoverColor: "hover:border-rose-400 hover:shadow-rose-100",
-    },
-    {
-      title: "Thứ tự gia phả",
-      description: "Sắp xếp và xem cấu trúc hệ thống",
-      icon: <Network className="size-8 text-indigo-600" />,
-      href: "/dashboard/lineage",
-      bgColor: "bg-indigo-50",
-      borderColor: "border-indigo-200/60",
-      hoverColor: "hover:border-indigo-400 hover:shadow-indigo-100",
-    },
-    {
-      title: "Sao lưu & Phục hồi",
-      description: "Xuất/Nhập dữ liệu toàn hệ thống",
-      icon: <Database className="size-8 text-teal-600" />,
-      href: "/dashboard/data",
-      bgColor: "bg-teal-50",
-      borderColor: "border-teal-200/60",
-      hoverColor: "hover:border-teal-400 hover:shadow-teal-100",
-    },
-  ];
-
   return (
-    <main className="flex-1 flex flex-col p-4 sm:p-8 max-w-7xl mx-auto w-full">
-      {/* <div className="mb-8 sm:mb-12 text-center sm:text-left">
-        <h1 className="title">Bảng điều khiển</h1>
-      </div> */}
-
-      {/* ── Today's Date & Upcoming Events ─────────────────── */}
-      <Link
-        href="/dashboard/events"
-        className="group relative block overflow-hidden rounded-3xl bg-white border border-stone-200/60 shadow-sm hover:shadow-stone-100 hover:border-stone-400 mb-10 transition-all duration-300 hover:-translate-y-1"
+    <main className="relative max-w-[1160px] mx-auto w-full px-5 sm:px-7 pb-14 pt-6 sm:pt-8">
+      {/* ===== Hero card (date + upcoming events) ===== */}
+      <section
+        className="relative backdrop-blur-md border p-6 sm:p-8 mb-6 grid gap-6 sm:gap-8 lg:grid-cols-[1fr_1fr_auto] lg:items-center"
+        style={{
+          background: "var(--l-card)",
+          borderColor: "var(--l-card-border)",
+        }}
       >
-        {/* Subtle background flair */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-amber-50/50 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none opacity-50"></div>
+        <CardCorners />
 
-        <div className="relative p-6 sm:p-8 flex flex-col md:flex-row gap-6 sm:gap-8 items-center">
-          {/* Date section */}
-          <div className="md:w-[35%] w-full flex flex-col items-center md:items-start text-center md:text-left gap-4 md:border-r border-stone-100 md:pr-8">
-            <div className="size-16 rounded-2xl bg-stone-50 flex items-center justify-center shrink-0 border border-stone-100 shadow-sm text-stone-600 transition-transform duration-500 group-hover:scale-105 group-hover:shadow-md group-hover:border-stone-200">
-              <CalendarDays className="size-7" />
-            </div>
-            <div className="mt-1">
-              <p className="text-xl sm:text-2xl font-bold text-stone-800 tracking-tight">
-                {lunar.solarStr}
-              </p>
-              <div className="mt-3 inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-stone-50 border border-stone-100">
-                <span className="text-xs font-medium text-stone-500 uppercase tracking-wider">
-                  Âm lịch:
-                </span>
-                <span className="text-sm font-semibold text-stone-700">
-                  {lunar.lunarDayStr}
-                </span>
-              </div>
-              <p className="text-sm pl-1 flex items-center justify-center md:justify-start gap-1 text-stone-500 mt-2 font-medium">
-                Năm {lunar.lunarYear}
-              </p>
-            </div>
+        {/* Date block */}
+        <div className="flex gap-4 sm:gap-5 items-start">
+          <div
+            className="size-12 sm:size-[52px] shrink-0 grid place-items-center border"
+            style={{
+              borderColor: "var(--l-line)",
+              background: "rgba(255,250,240,0.9)",
+              color: "var(--l-bronze-deep)",
+            }}
+          >
+            <CalendarDays className="size-6" />
           </div>
-
-          {/* Events summary */}
-          <div className="md:w-[65%] w-full flex-1">
-            {upcomingEvents.length > 0 ? (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-semibold text-stone-500 uppercase tracking-widest flex items-center gap-2.5">
-                    <span className="relative flex size-2">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full size-2 bg-amber-500"></span>
-                    </span>
-                    Sự kiện 30 ngày tới ({upcomingEvents.length})
-                  </p>
-                  <ArrowRight className="size-5 text-stone-300 group-hover:text-stone-500 group-hover:translate-x-1 transition-all duration-300" />
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {upcomingEvents.slice(0, 4).map((evt, i) => {
-                    const cfg = eventTypeConfig[evt.type];
-                    const Icon = cfg.icon;
-                    return (
-                      <div
-                        key={i}
-                        className="flex items-center gap-3.5 p-3 rounded-2xl bg-stone-50/50 hover:bg-stone-50 border border-transparent hover:border-stone-100 transition-all duration-300 cursor-pointer"
-                      >
-                        <div
-                          className={`size-10 rounded-xl ${cfg.bg} flex items-center justify-center shrink-0 shadow-sm border border-white`}
-                        >
-                          <Icon className={`size-4 ${cfg.color}`} />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <span className="text-sm font-semibold text-stone-700 truncate block">
-                            {evt.personName}
-                          </span>
-                          <span className="text-xs text-stone-500 font-medium pt-0.5 block">
-                            {evt.daysUntil === 0
-                              ? "Hôm nay"
-                              : evt.daysUntil === 1
-                                ? "Ngày mai"
-                                : `${evt.daysUntil} ngày nữa`}{" "}
-                            · {evt.eventDateLabel}
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-                {upcomingEvents.length > 4 && (
-                  <p className="text-xs text-stone-400 mt-2 text-center sm:text-left font-medium">
-                    + {upcomingEvents.length - 4} sự kiện khác đang chờ...
-                  </p>
-                )}
-              </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center h-full gap-3 opacity-80 py-6">
-                <div className="p-4 bg-stone-50 rounded-2xl border border-stone-100 text-stone-400 transition-transform duration-500 group-hover:scale-105 group-hover:text-stone-500">
-                  <CalendarDays className="size-6" />
-                </div>
-                <p className="text-stone-500 text-center font-medium px-4">
-                  Không có sự kiện nào trong 30 ngày tới.
-                </p>
-                <div className="flex items-center gap-2 text-sm text-stone-400 mt-1 font-medium group-hover:text-stone-600 transition-colors">
-                  <span>Xem sự kiện trong năm</span>
-                  <ArrowRight className="size-4 group-hover:translate-x-1 transition-transform" />
-                </div>
-              </div>
-            )}
+          <div className="min-w-0">
+            <div
+              className="text-[10px] tracking-[0.22em] uppercase mb-1.5"
+              style={{
+                fontFamily: "var(--font-jetbrains-mono), monospace",
+                color: "var(--l-muted)",
+              }}
+            >
+              Hôm nay · Dương lịch
+            </div>
+            <h2
+              className="font-semibold text-[22px] sm:text-[28px] lg:text-[30px] leading-tight tracking-tight mb-2"
+              style={{
+                fontFamily: "var(--font-lora), var(--font-playfair), serif",
+                color: "var(--l-ink)",
+              }}
+            >
+              {formatSolarDate(lunar.solarStr)}
+            </h2>
+            <div
+              className="flex items-center gap-2 text-[10px] tracking-[0.18em] uppercase"
+              style={{
+                fontFamily: "var(--font-jetbrains-mono), monospace",
+                color: "var(--l-muted)",
+              }}
+            >
+              Âm lịch ·{" "}
+              <b
+                className="font-semibold text-[13px] tracking-normal normal-case"
+                style={{
+                  fontFamily: "var(--font-lora), var(--font-playfair), serif",
+                  color: "var(--l-bronze-deep)",
+                }}
+              >
+                {lunar.lunarDayStr}
+              </b>
+            </div>
+            <div
+              className="italic text-[13px] sm:text-[14px] mt-2"
+              style={{
+                fontFamily: "var(--font-lora), var(--font-playfair), serif",
+                color: "var(--l-ink-soft)",
+              }}
+            >
+              Năm {lunar.lunarYear}
+            </div>
           </div>
         </div>
-      </Link>
 
-      {/* ── Feature Grid ──────────────────────────────────── */}
-      <div className="space-y-12">
-        <section>
-          {/* <h3 className="text-xl font-serif font-bold text-stone-700 mb-6 flex items-center gap-2">
-            <span className="w-8 h-px bg-stone-300 rounded-full"></span>
-            Chức năng chung
-          </h3> */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-            {publicFeatures.map((feat) => (
-              <Link
-                key={feat.href}
-                href={feat.href}
-                className={`group flex flex-col p-6 rounded-2xl bg-white border ${feat.borderColor} ${feat.hoverColor} transition-all duration-300 hover:-translate-y-1 shadow-sm`}
-              >
-                <div
-                  className={`size-14 rounded-xl flex items-center justify-center mb-5 ${feat.bgColor} transition-colors duration-300 group-hover:bg-white border border-transparent group-hover:${feat.borderColor}`}
-                >
-                  {feat.icon}
-                </div>
-                <h4 className="text-lg font-bold text-stone-800 mb-2 group-hover:text-amber-700 transition-colors">
-                  {feat.title}
-                </h4>
-                <p className="text-sm text-stone-500 line-clamp-2">
-                  {feat.description}
-                </p>
-              </Link>
-            ))}
+        {/* Upcoming events */}
+        <div
+          className="lg:border-l lg:pl-7 lg:border-dashed border-t pt-5 lg:pt-0 lg:border-t-0 lg:border-dashed-0"
+          style={{ borderColor: "var(--l-line)" }}
+        >
+          <div
+            className="flex items-center gap-2.5 mb-3 text-[11px] tracking-[0.22em] uppercase font-medium"
+            style={{
+              fontFamily: "var(--font-jetbrains-mono), monospace",
+              color: "var(--l-bronze-deep)",
+            }}
+          >
+            <span
+              className="size-1.5 rounded-full"
+              style={{
+                background: "var(--l-bronze-glow)",
+                boxShadow: "0 0 0 3px rgba(194,138,61,0.25)",
+              }}
+            />
+            Sự kiện 30 ngày tới ·{" "}
+            <span
+              className="normal-case font-normal"
+              style={{ color: "var(--l-muted)" }}
+            >
+              ({upcomingEvents.length})
+            </span>
           </div>
-        </section>
-
-        {isAdmin && (
-          <section>
-            <h3 className="text-xl font-serif font-bold text-rose-800 mb-6 flex items-center gap-2">
-              <span className="w-8 h-px bg-rose-200 rounded-full"></span>
-              Quản trị viên
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-              {adminFeatures.map((feat) => (
-                <Link
-                  key={feat.href}
-                  href={feat.href}
-                  className={`group flex flex-col p-6 rounded-2xl bg-white border ${feat.borderColor} ${feat.hoverColor} transition-all duration-300 hover:-translate-y-1 shadow-sm`}
+          {upcomingEvents.length === 0 ? (
+            <div
+              className="flex items-center gap-2 px-3.5 py-3 border text-[13px]"
+              style={{
+                background: "rgba(255,250,240,0.55)",
+                borderColor: "var(--l-line)",
+                color: "var(--l-muted)",
+                fontFamily: "var(--font-lora), var(--font-playfair), serif",
+              }}
+            >
+              <Dot className="size-4" />
+              Không có sự kiện nào trong 30 ngày tới.
+            </div>
+          ) : (
+            <div className="space-y-2.5">
+              {upcomingEvents.map((evt, i) => (
+                <div
+                  key={i}
+                  className="flex items-center gap-3.5 px-3.5 py-2.5 border"
+                  style={{
+                    background: "rgba(255,250,240,0.75)",
+                    borderColor: "var(--l-line)",
+                  }}
                 >
                   <div
-                    className={`size-14 rounded-xl flex items-center justify-center mb-5 ${feat.bgColor} transition-colors duration-300 group-hover:bg-white border border-transparent group-hover:${feat.borderColor}`}
+                    className="size-9 shrink-0 grid place-items-center border"
+                    style={{
+                      background: "rgba(194,138,61,0.18)",
+                      borderColor: "rgba(194,138,61,0.35)",
+                      color: "var(--l-bronze-deep)",
+                    }}
                   >
-                    {feat.icon}
+                    <Star className="size-4" fill="currentColor" />
                   </div>
-                  <h4 className="text-lg font-bold text-stone-800 mb-2 group-hover:text-rose-700 transition-colors">
-                    {feat.title}
-                  </h4>
-                  <p className="text-sm text-stone-500 line-clamp-2">
-                    {feat.description}
-                  </p>
-                </Link>
+                  <div className="min-w-0">
+                    <div
+                      className="font-semibold text-[14px] sm:text-[15px] truncate"
+                      style={{
+                        fontFamily:
+                          "var(--font-lora), var(--font-playfair), serif",
+                        color: "var(--l-ink)",
+                      }}
+                    >
+                      {evt.personName}
+                    </div>
+                    <div
+                      className="mt-0.5 text-[10px] tracking-[0.14em] uppercase"
+                      style={{
+                        fontFamily: "var(--font-jetbrains-mono), monospace",
+                        color: "var(--l-muted)",
+                      }}
+                    >
+                      {evt.daysUntil === 0
+                        ? "Hôm nay"
+                        : evt.daysUntil === 1
+                          ? "Ngày mai"
+                          : `${evt.daysUntil} ngày nữa`}{" "}
+                      · {evt.eventDateLabel}
+                    </div>
+                  </div>
+                </div>
               ))}
             </div>
-          </section>
-        )}
-      </div>
+          )}
+        </div>
+
+        {/* Arrow to /events */}
+        <Link
+          href="/dashboard/events"
+          aria-label="Xem tất cả sự kiện"
+          className="hidden lg:grid place-items-center size-10 border transition-all hover:-translate-y-px self-start"
+          style={{
+            borderColor: "var(--l-line)",
+            background: "rgba(255,250,240,0.6)",
+            color: "var(--l-bronze-deep)",
+          }}
+        >
+          <ArrowRight className="size-4" />
+        </Link>
+      </section>
+
+      {/* ===== Public features ===== */}
+      <FeatureGrid items={publicFeatures} />
+
+      {/* ===== Admin section ===== */}
+      {isAdmin && (
+        <>
+          <div className="flex items-center gap-3.5 mt-10 mb-4">
+            <span
+              className="w-7 h-px"
+              style={{ background: "var(--l-bronze)" }}
+            />
+            <h3
+              className="italic font-medium text-[20px] sm:text-[22px] tracking-wide m-0"
+              style={{
+                fontFamily: "var(--font-lora), var(--font-playfair), serif",
+                color: "var(--l-bronze-deep)",
+              }}
+            >
+              Quản trị viên
+            </h3>
+          </div>
+          <FeatureGrid items={adminFeatures} />
+        </>
+      )}
+
     </main>
+  );
+}
+
+function CardCorners() {
+  return (
+    <>
+      <span
+        className="absolute -top-px -left-px size-[14px] border"
+        style={{
+          borderColor: "var(--l-bronze)",
+          borderRight: "none",
+          borderBottom: "none",
+        }}
+      />
+      <span
+        className="absolute -bottom-px -right-px size-[14px] border"
+        style={{
+          borderColor: "var(--l-bronze)",
+          borderLeft: "none",
+          borderTop: "none",
+        }}
+      />
+    </>
+  );
+}
+
+function FeatureGrid({ items }: { items: FeatItem[] }) {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+      {items.map((f) => {
+        const c = iconColors[f.color];
+        return (
+          <Link
+            key={f.href}
+            href={f.href}
+            className="relative group block backdrop-blur-md border p-6 sm:p-7 transition-all hover:-translate-y-0.5 hover:shadow-[0_16px_40px_rgba(94,58,23,0.08)]"
+            style={{
+              background: "var(--l-card)",
+              borderColor: "var(--l-card-border)",
+            }}
+          >
+            <CardCorners />
+            <div
+              className="size-11 grid place-items-center border mb-5"
+              style={{
+                background: c.bg,
+                borderColor: c.border,
+                color: c.color,
+              }}
+            >
+              {f.icon}
+            </div>
+            <h3
+              className="font-semibold text-[18px] sm:text-[20px] mb-1.5 tracking-tight group-hover:text-[var(--l-bronze-deep)] transition-colors"
+              style={{
+                fontFamily: "var(--font-lora), var(--font-playfair), serif",
+                color: "var(--l-ink)",
+              }}
+            >
+              {f.title}
+            </h3>
+            <p
+              className="text-[13px] sm:text-[13.5px] leading-[1.55] m-0"
+              style={{
+                fontFamily: "var(--font-lora), var(--font-playfair), serif",
+                color: "var(--l-ink-soft)",
+              }}
+            >
+              {f.desc}
+            </p>
+          </Link>
+        );
+      })}
+    </div>
   );
 }
