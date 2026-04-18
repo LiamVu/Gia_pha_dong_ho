@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { BarChart2, ChevronDown, Database, GitMerge, Info, Network, UserCircle, Users } from "lucide-react";
+import { BarChart2, ChevronDown, Database, GitMerge, Network, UserCircle, Users } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import LogoutButton from "./LogoutButton";
@@ -67,7 +67,7 @@ export default function HeaderMenu() {
                 className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-stone-700 hover:text-amber-700 hover:bg-amber-50 transition-colors"
               >
                 <Network className="size-4" />
-                Bảng điều khiển
+                Trang chủ
               </Link>
 
               <Link
@@ -135,15 +135,6 @@ export default function HeaderMenu() {
               )}
 
               <div className="h-px bg-stone-100 my-1 mx-4" />
-
-              <Link
-                href="/about"
-                onClick={() => setIsOpen(false)}
-                className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-stone-700 hover:text-rose-700 hover:bg-rose-50 transition-colors"
-              >
-                <Info className="size-4" />
-                Giới thiệu
-              </Link>
 
               <LogoutButton />
             </div>
